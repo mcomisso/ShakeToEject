@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 @main
@@ -9,7 +10,11 @@ struct ShakeToEjectApp: App {
             MenuBarContent(
                 sensor: appDelegate.sensor,
                 drives: appDelegate.drives,
-                warningCoordinator: appDelegate.warningCoordinator
+                warningCoordinator: appDelegate.warningCoordinator,
+                settings: appDelegate.settings,
+                onOpenDashboard: { [weak appDelegate] in
+                    appDelegate?.openDashboard()
+                }
             )
         } label: {
             Image(systemName: "eject.circle")
@@ -23,19 +28,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let sensor = SensorService()
     let drives = DriveMonitor()
     let soundPlayer = SoundPlayer()
+    let settings = SettingsStore()
     lazy var warningCoordinator = WarningCoordinator(
         driveMonitor: drives,
-        soundPlayer: soundPlayer
+        soundPlayer: soundPlayer,
+        settings: settings
     )
 
+    private var dashboardWindow: DashboardWindow?
+
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Wire real shake events to the warning flow. `trigger()` is
-        // a no-op when no drives are mounted (force: false), so shaking
-        // the laptop with nothing plugged in stays silent.
+        // Wire settings → sensor for live updates
+        settings.onSensitivityChange = { [weak self] value in
+            self?.sensor.setThreshold(value)
+        }
+        settings.onCooldownChange = { [weak self] samples in
+            self?.sensor.setCooldownSamples(samples)
+        }
+
+        // Wire real shakes → warning flow
         sensor.onShake = { [weak self] _ in
             self?.warningCoordinator.trigger()
         }
-        sensor.start()
+
+        // Start the sensor with the current settings values
+        sensor.start(
+            threshold: settings.sensitivityThreshold,
+            cooldownSamples: settings.cooldownSamples
+        )
         drives.start()
         _ = warningCoordinator // force lazy init
     }
@@ -43,5 +63,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         sensor.stop()
         drives.stop()
+    }
+
+    /// Creates-or-shows the settings window. Idempotent; subsequent
+    /// calls just bring the existing window to the front.
+    func openDashboard() {
+        if let existing = dashboardWindow {
+            existing.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+        let view = DashboardView(settings: settings)
+        let window = DashboardWindow(rootView: view)
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        dashboardWindow = window
     }
 }

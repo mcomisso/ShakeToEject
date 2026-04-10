@@ -4,6 +4,8 @@ struct MenuBarContent: View {
     let sensor: SensorService
     let drives: DriveMonitor
     let warningCoordinator: WarningCoordinator
+    let settings: SettingsStore
+    let onOpenDashboard: () -> Void
 
     var body: some View {
         Text("ShakeToEject \(Bundle.main.shortVersion)")
@@ -14,6 +16,11 @@ struct MenuBarContent: View {
 
         if sensor.lastShakeMagnitude > 0 {
             Text(String(format: "Last magnitude: %.3f g", sensor.lastShakeMagnitude))
+        }
+
+        if warningCoordinator.isEjecting {
+            Text("Ejecting…")
+                .foregroundStyle(.orange)
         }
 
         Divider()
@@ -31,6 +38,11 @@ struct MenuBarContent: View {
         }
 
         Divider()
+
+        Button("Settings…") {
+            onOpenDashboard()
+        }
+        .keyboardShortcut(",")
 
         Button("Simulate Shake (dev)") {
             warningCoordinator.trigger(force: true)

@@ -25,11 +25,15 @@ final class SensorService {
 
     private var worker: SensorWorker?
 
-    /// Starts the sensor pipeline. No-op if already running.
-    func start() {
+    /// Starts the sensor pipeline with the given detector parameters.
+    /// No-op if already running.
+    func start(threshold: Double, cooldownSamples: Int) {
         guard worker == nil else { return }
 
-        let newWorker = SensorWorker { [weak self] event in
+        let newWorker = SensorWorker(
+            threshold: threshold,
+            cooldownSamples: cooldownSamples
+        ) { [weak self] event in
             // Called on the sensor worker thread. Hop to @MainActor for
             // observable state mutations so SwiftUI sees them safely.
             Task { @MainActor [weak self] in
@@ -49,5 +53,18 @@ final class SensorService {
         worker?.stop()
         worker = nil
         isRunning = false
+    }
+
+    /// Applies a new sensitivity threshold in g to the running sensor.
+    /// Safe to call while the sensor is running; the change takes
+    /// effect on the next sample the worker processes.
+    func setThreshold(_ threshold: Double) {
+        worker?.updateThreshold(threshold)
+    }
+
+    /// Applies a new cooldown sample count to the running sensor.
+    /// Safe to call while the sensor is running.
+    func setCooldownSamples(_ samples: Int) {
+        worker?.updateCooldownSamples(samples)
     }
 }

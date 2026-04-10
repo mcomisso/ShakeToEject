@@ -27,8 +27,8 @@ final class SensorWorker: @unchecked Sendable {
     private let runLoopReady = DispatchSemaphore(value: 0)
 
     init(
-        threshold: Double = 0.3,
-        cooldownSamples: Int = 800,
+        threshold: Double,
+        cooldownSamples: Int,
         handler: @escaping ShakeHandler
     ) {
         self.handler = handler
@@ -58,6 +58,20 @@ final class SensorWorker: @unchecked Sendable {
         }
         thread = nil
         runLoop = nil
+    }
+
+    /// Updates the detector's threshold from the main thread. The
+    /// `ShakeDetector` class is @unchecked Sendable; races against
+    /// the HID callback thread are benign (one sample lands with the
+    /// old value, the next with the new).
+    func updateThreshold(_ value: Double) {
+        detector.threshold = value
+    }
+
+    /// Updates the detector's cooldown sample count from the main
+    /// thread. Same race-benign semantics as `updateThreshold`.
+    func updateCooldownSamples(_ value: Int) {
+        detector.cooldownSamples = value
     }
 
     // MARK: - Worker thread body

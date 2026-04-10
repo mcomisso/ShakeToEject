@@ -52,26 +52,24 @@ final class WarningCoordinator {
 
     private let driveMonitor: DriveMonitor
     private let soundPlayer: SoundPlayer
+    private let settings: SettingsStore
 
     private var window: WarningOverlayWindow?
     private var countdownTask: Task<Void, Never>?
     private var ejectingWatchTask: Task<Void, Never>?
 
-    init(driveMonitor: DriveMonitor, soundPlayer: SoundPlayer) {
+    init(driveMonitor: DriveMonitor, soundPlayer: SoundPlayer, settings: SettingsStore) {
         self.driveMonitor = driveMonitor
         self.soundPlayer = soundPlayer
+        self.settings = settings
     }
 
     // MARK: - Public flow
 
-    /// Starts the warning flow: snaps the current drive list, shows
-    /// the overlay window, plays the warning sound, and begins the
-    /// countdown. No-op if the overlay is already showing.
-    ///
-    /// Set `force: true` to show the overlay even when no drives are
-    /// mounted — used by the dev-only "Simulate Shake" menu item so
-    /// the flow can be exercised without a physical drive plugged in.
-    func trigger(countdownSeconds: Int = 5, force: Bool = false) {
+    /// Starts the warning flow. The countdown length is taken from the
+    /// `SettingsStore` unless overridden via `overrideCountdown` (used
+    /// by dev/test paths that want a specific value).
+    func trigger(force: Bool = false, overrideCountdown: Int? = nil) {
         guard !isShowing else { return }
 
         guard !isEjecting else {
@@ -86,9 +84,17 @@ final class WarningCoordinator {
             return
         }
 
-        totalSeconds = countdownSeconds
-        secondsRemaining = countdownSeconds
+        let countdown = overrideCountdown ?? settings.countdownSeconds
+        totalSeconds = countdown
+        secondsRemaining = countdown
         isShowing = true
+
+        // Log the warning style even though only fullscreen is
+        // implemented in Phase 8 — this surfaces future issues when
+        // Phase 9 fills in notch/auto.
+        if settings.warningStyle != .fullscreen {
+            NSLog("[warning] warning style \(settings.warningStyle.rawValue) not yet implemented — falling back to fullscreen")
+        }
 
         soundPlayer.playWarning()
         showWindow()
