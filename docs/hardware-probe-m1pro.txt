@@ -1,0 +1,152 @@
+    | |   |       |     +-o AppleSPUHIDDevice  <class AppleSPUHIDDevice, id 0x100000a31, registered, matched, active, busy 0 (18 ms), retain 7>
+    | |   |       |       | {
+    | |   |       |       |   "IOMatchedAtBoot" = Yes
+    | |   |       |       |   "PrimaryUsagePage" = 65280
+    | |   |       |       |   "MaxInputReportSize" = 22
+    | |   |       |       |   "IOUserClientClass" = "IOHIDLibUserClient"
+    | |   |       |       |   "ReportDescriptor" = <0600ff0a0300a101150026ff00750895168102c0>
+    | |   |       |       |   "VendorID" = 1452
+    | |   |       |       |   "Built-In" = Yes
+    | |   |       |       |   "MaxFeatureReportSize" = 0
+    | |   |       |       |   "SerialNumber" = "000000000000a5419eaab920"
+    | |   |       |       |   "Transport" = "SPU"
+    | |   |       |       |   "Elements" = ({"ReportID"=0,"ElementCookie"=1,"CollectionType"=1,"Type"=513,"VariableSize"=0,"UsagePage"=65280,"Usage"=3},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=0,"IsArray"=Yes,"Type"=5,"Size"=0,"Min"=0,"Flags"=0,"ReportID"=0,"Usage"=18446744073709551615,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=0,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=0,"ElementCookie"=3},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=1,"IsArray"=Yes,"Type"=5,"Size"=1,"Min"=0,"Flags"=0,"ReportID"=0,"Usage"=0,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=1,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=1,"ElementCookie"=2})
+    | |   |       |       |   "HIDRMDeviceState" = "Allowed"
+    | |   |       |       |   "Manufacturer" = "Apple"
+    | |   |       |       |   "ProductID" = 33028
+--
+    | |   |       |     +-o AppleSPUHIDDevice  <class AppleSPUHIDDevice, id 0x100000a35, registered, matched, active, busy 0 (230 ms), retain 7>
+    | |   |       |       | {
+    | |   |       |       |   "IOMatchedAtBoot" = Yes
+    | |   |       |       |   "PrimaryUsagePage" = 65280
+    | |   |       |       |   "MaxInputReportSize" = 22
+    | |   |       |       |   "IOUserClientClass" = "IOHIDLibUserClient"
+    | |   |       |       |   "ReportDescriptor" = <0600ff0a0900a101150026ff00750895168102c0>
+    | |   |       |       |   "VendorID" = 1452
+    | |   |       |       |   "Built-In" = Yes
+    | |   |       |       |   "MaxFeatureReportSize" = 0
+    | |   |       |       |   "SerialNumber" = "000000000000a5419eaab920"
+    | |   |       |       |   "Transport" = "SPU"
+    | |   |       |       |   "Elements" = ({"ReportID"=0,"ElementCookie"=1,"CollectionType"=1,"Type"=513,"VariableSize"=0,"UsagePage"=65280,"Usage"=9},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=0,"IsArray"=Yes,"Type"=5,"Size"=0,"Min"=0,"Flags"=0,"ReportID"=0,"Usage"=18446744073709551615,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=0,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=0,"ElementCookie"=3},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=1,"IsArray"=Yes,"Type"=5,"Size"=1,"Min"=0,"Flags"=0,"ReportID"=0,"Usage"=0,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=1,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=1,"ElementCookie"=2})
+    | |   |       |       |   "HIDRMDeviceState" = "Allowed"
+    | |   |       |       |   "Manufacturer" = "Apple"
+    | |   |       |       |   "ProductID" = 33028
+--
+    | |   |       |     +-o AppleSPUHIDDevice  <class AppleSPUHIDDevice, id 0x100000a32, registered, matched, active, busy 0 (208 ms), retain 7>
+    | |   |       |       | {
+    | |   |       |       |   "IOClass" = "AppleSPUHIDDevice"
+    | |   |       |       |   "Transport" = "SPU"
+    | |   |       |       |   "IOPersonalityPublisher" = "com.apple.driver.AppleSPU"
+    | |   |       |       |   "IOMatchedAtBoot" = Yes
+    | |   |       |       |   "IOReportLegendPublic" = Yes
+    | |   |       |       |   "MaxInputReportSize" = 122
+    | |   |       |       |   "IOProviderClass" = "AppleSPUHIDInterface"
+    | |   |       |       |   "Manufacturer" = "Apple"
+    | |   |       |       |   "Built-In" = Yes
+    | |   |       |       |   "DeviceUsagePairs" = ({"DeviceUsagePage"=65280,"DeviceUsage"=4})
+    | |   |       |       |   "IOProbeScore" = 0
+    | |   |       |       |   "ReportDescriptor" = <0600ff0a0400a101150026ff007508957a8100c0>
+    | |   |       |       |   "MaxOutputReportSize" = 0
+    | |   |       |       |   "IOUserClientClass" = "IOHIDLibUserClient"
+--
+    | |   |       |     +-o AppleSPUHIDDevice  <class AppleSPUHIDDevice, id 0x100000a39, registered, matched, active, busy 0 (563 ms), retain 11>
+    | |   |       |       | {
+    | |   |       |       |   "IOMatchedAtBoot" = Yes
+    | |   |       |       |   "PrimaryUsagePage" = 32
+    | |   |       |       |   "MaxInputReportSize" = 8
+    | |   |       |       |   "IOUserClientClass" = "IOHIDLibUserClient"
+    | |   |       |       |   "ReportDescriptor" = <0520098aa10185010a7f044668013426680114750995018102651485020a0b0345ff3425ff1475089501810285030a070347ffffff7f3427ffffff7f1475209501810247010000003427010000001475089501810285040a030345033425031475089501810285050a840445023425021475089501810285060a440545013425011475089501910285070a450547a08c00003427a08c00001475329501550e810285080a4605450234250214750895018102c0>
+    | |   |       |       |   "VendorID" = 1452
+    | |   |       |       |   "Built-In" = Yes
+    | |   |       |       |   "MaxFeatureReportSize" = 1
+    | |   |       |       |   "SerialNumber" = ""
+    | |   |       |       |   "Transport" = "SPU"
+    | |   |       |       |   "Elements" = ({"ReportID"=0,"ElementCookie"=1,"CollectionType"=1,"Type"=513,"VariableSize"=0,"Elements"=({"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=32,"Max"=360,"IsArray"=No,"Type"=1,"Size"=9,"Min"=0,"Flags"=2,"ReportID"=1,"Usage"=1151,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=9,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=360,"ElementCookie"=20},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=32,"Max"=0,"IsArray"=No,"Type"=1,"Size"=8,"Min"=18446744073709551615,"Flags"=2,"ReportID"=2,"Usage"=779,"ReportCount"=1,"Unit"=20,"HasNullState"=No,"ReportSize"=8,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=18446744073709551615,"IsWrapping"=No,"ScaledMax"=0,"ElementCookie"=21},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=32,"Max"=2147483647,"IsArray"=No,"Type"=1,"Size"=32,"Min"=0,"Flags"=2,"ReportID"=3,"Usage"=775,"ReportCount"=1,"Unit"=20,"HasNullState"=No,"ReportSize"=32,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=2147483647,"ElementCookie"=22},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=32,"Max"=3,"IsArray"=No,"Type"=1,"Size"=8,"Min"=0,"Flags"=2,"ReportID"=4,"Usage"=771,"ReportCount"=1,"Unit"=20,"HasNullState"=No,"ReportSize"=8,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=3,"ElementCookie"=23},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=32,"Max"=2,"IsArray"=No,"Type"=1,"Size"=8,"Min"=0,"Flags"=2,"ReportID"=5,"Usage"=1156,"ReportCount"=1,"Unit"=20,"HasNullState"=No,"ReportSize"=8,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=2,"ElementCookie"=24},{"VariableSize"=0,"UnitExponent"=14,"IsRelative"=No,"UsagePage"=32,"Max"=36000,"IsArray"=No,"Type"=1,"Size"=50,"Min"=0,"Flags"=2,"ReportID"=7,"Usage"=1349,"ReportCount"=1,"Unit"=20,"HasNullState"=No,"ReportSize"=50,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=36000,"ElementCookie"=25},{"VariableSize"=0,"UnitExponent"=14,"IsRelative"=No,"UsagePage"=32,"Max"=2,"IsArray"=No,"Type"=1,"Size"=8,"Min"=0,"Flags"=2,"ReportID"=8,"Usage"=1350,"ReportCount"=1,"Unit"=20,"HasNullState"=No,"ReportSize"=8,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=2,"ElementCookie"=26},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=32,"Max"=1,"IsArray"=No,"Type"=129,"Size"=8,"Min"=0,"Flags"=2,"ReportID"=6,"Usage"=1348,"ReportCount"=1,"Unit"=20,"HasNullState"=No,"ReportSize"=8,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=1,"ElementCookie"=27}),"UsagePage"=32,"Usage"=138},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=0,"IsArray"=Yes,"Type"=5,"Size"=0,"Min"=0,"Flags"=0,"ReportID"=0,"Usage"=18446744073709551615,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=0,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=0,"ElementCookie"=3},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=1,"IsArray"=Yes,"Type"=5,"Size"=1,"Min"=0,"Flags"=0,"ReportID"=0,"Usage"=0,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=1,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=1,"ElementCookie"=2},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=0,"IsArray"=Yes,"Type"=5,"Size"=0,"Min"=0,"Flags"=0,"ReportID"=1,"Usage"=18446744073709551615,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=0,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=0,"ElementCookie"=5},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=1,"IsArray"=Yes,"Type"=5,"Size"=1,"Min"=0,"Flags"=0,"ReportID"=1,"Usage"=0,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=1,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=1,"ElementCookie"=4},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=0,"IsArray"=Yes,"Type"=5,"Size"=0,"Min"=0,"Flags"=0,"ReportID"=2,"Usage"=18446744073709551615,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=0,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=0,"ElementCookie"=7},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=1,"IsArray"=Yes,"Type"=5,"Size"=1,"Min"=0,"Flags"=0,"ReportID"=2,"Usage"=0,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=1,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=1,"ElementCookie"=6},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=0,"IsArray"=Yes,"Type"=5,"Size"=0,"Min"=0,"Flags"=0,"ReportID"=3,"Usage"=18446744073709551615,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=0,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=0,"ElementCookie"=9},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=1,"IsArray"=Yes,"Type"=5,"Size"=1,"Min"=0,"Flags"=0,"ReportID"=3,"Usage"=0,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=1,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=1,"ElementCookie"=8},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=0,"IsArray"=Yes,"Type"=5,"Size"=0,"Min"=0,"Flags"=0,"ReportID"=4,"Usage"=18446744073709551615,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=0,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=0,"ElementCookie"=11},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=1,"IsArray"=Yes,"Type"=5,"Size"=1,"Min"=0,"Flags"=0,"ReportID"=4,"Usage"=0,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=1,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=1,"ElementCookie"=10},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=0,"IsArray"=Yes,"Type"=5,"Size"=0,"Min"=0,"Flags"=0,"ReportID"=5,"Usage"=18446744073709551615,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=0,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=0,"ElementCookie"=13},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=1,"IsArray"=Yes,"Type"=5,"Size"=1,"Min"=0,"Flags"=0,"ReportID"=5,"Usage"=0,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=1,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=1,"ElementCookie"=12},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=0,"IsArray"=Yes,"Type"=5,"Size"=0,"Min"=0,"Flags"=0,"ReportID"=6,"Usage"=18446744073709551615,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=0,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=0,"ElementCookie"=15},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=1,"IsArray"=Yes,"Type"=5,"Size"=1,"Min"=0,"Flags"=0,"ReportID"=6,"Usage"=0,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=1,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=1,"ElementCookie"=14},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=0,"IsArray"=Yes,"Type"=5,"Size"=0,"Min"=0,"Flags"=0,"ReportID"=7,"Usage"=18446744073709551615,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=0,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=0,"ElementCookie"=17},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=1,"IsArray"=Yes,"Type"=5,"Size"=1,"Min"=0,"Flags"=0,"ReportID"=7,"Usage"=0,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=1,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=1,"ElementCookie"=16},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=0,"IsArray"=Yes,"Type"=5,"Size"=0,"Min"=0,"Flags"=0,"ReportID"=8,"Usage"=18446744073709551615,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=0,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=0,"ElementCookie"=19},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=1,"IsArray"=Yes,"Type"=5,"Size"=1,"Min"=0,"Flags"=0,"ReportID"=8,"Usage"=0,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=1,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=1,"ElementCookie"=18})
+    | |   |       |       |   "HIDRMDeviceState" = "Allowed"
+    | |   |       |       |   "Manufacturer" = "Apple"
+    | |   |       |       |   "ProductID" = 33028
+--
+    | |   |       |     +-o AppleSPUHIDDevice  <class AppleSPUHIDDevice, id 0x100000a30, registered, matched, active, busy 0 (207 ms), retain 8>
+    | |   |       |       | {
+    | |   |       |       |   "IOClass" = "AppleSPUHIDDevice"
+    | |   |       |       |   "Transport" = "SPU"
+    | |   |       |       |   "IOPersonalityPublisher" = "com.apple.driver.AppleSPU"
+    | |   |       |       |   "IOMatchedAtBoot" = Yes
+    | |   |       |       |   "IOReportLegendPublic" = Yes
+    | |   |       |       |   "MaxInputReportSize" = 1
+    | |   |       |       |   "IOProviderClass" = "AppleSPUHIDInterface"
+    | |   |       |       |   "Manufacturer" = "Apple"
+    | |   |       |       |   "Built-In" = Yes
+    | |   |       |       |   "DeviceUsagePairs" = ({"DeviceUsagePage"=65280,"DeviceUsage"=255})
+    | |   |       |       |   "IOProbeScore" = 0
+    | |   |       |       |   "ReportDescriptor" = <0600ff0aff00a101150026ff00750895018102c0>
+    | |   |       |       |   "MaxOutputReportSize" = 0
+    | |   |       |       |   "IOUserClientClass" = "IOHIDLibUserClient"
+--
+    | |   |       |       +-o AppleSPUHIDDeviceUserClient  <class AppleSPUHIDDeviceUserClient, id 0x100000ffb, !registered, !matched, active, busy 0, retain 6>
+    | |   |       |           {
+    | |   |       |             "IOUserClientCreator" = "pid 456, WindowServer"
+    | |   |       |             "IOUserClientDefaultLocking" = Yes
+    | |   |       |           }
+    | |   |       |           
+    | |   |       +-o AOPEndpoint7  <class RTBuddyEndpointService, id 0x10000051e, registered, matched, active, busy 0 (59 ms), retain 7>
+    | |   |       | | {
+    | |   |       | | }
+    | |   |       | | 
+    | |   |       | +-o AppleSPU  <class AppleSPU, id 0x10000052d, registered, matched, active, busy 0 (8 ms), retain 6>
+    | |   |       |     {
+    | |   |       |       "IOClass" = "AppleSPU"
+    | |   |       |       "CFBundleIdentifier" = "com.apple.driver.AppleSPU"
+    | |   |       |       "IOProviderClass" = "RTBuddyEndpointService"
+    | |   |       |       "IOPowerManagement" = {"CapabilityFlags"=32768,"MaxPowerState"=2,"CurrentPowerState"=2}
+--
+    | |   |       |     +-o AppleSPUHIDDevice  <class AppleSPUHIDDevice, id 0x100000a37, registered, matched, active, busy 0 (210 ms), retain 7>
+    | |   |       |       | {
+    | |   |       |       |   "IOClass" = "AppleSPUHIDDevice"
+    | |   |       |       |   "Transport" = "SPU"
+    | |   |       |       |   "IOPersonalityPublisher" = "com.apple.driver.AppleSPU"
+    | |   |       |       |   "IOMatchedAtBoot" = Yes
+    | |   |       |       |   "IOReportLegendPublic" = Yes
+    | |   |       |       |   "MaxInputReportSize" = 100
+    | |   |       |       |   "IOProviderClass" = "AppleSPUHIDInterface"
+    | |   |       |       |   "Manufacturer" = "Apple"
+    | |   |       |       |   "Built-In" = Yes
+    | |   |       |       |   "DeviceUsagePairs" = ({"DeviceUsagePage"=65292,"DeviceUsage"=5})
+    | |   |       |       |   "IOProbeScore" = 0
+    | |   |       |       |   "ReportDescriptor" = <060cff0905a1018500150026ff00750895648102c0>
+    | |   |       |       |   "MaxOutputReportSize" = 0
+    | |   |       |       |   "IOUserClientClass" = "IOHIDLibUserClient"
+--
+    | |   |       |     +-o AppleSPUHIDDevice  <class AppleSPUHIDDevice, id 0x100000a36, registered, matched, active, busy 0 (18 ms), retain 7>
+    | |   |       |       | {
+    | |   |       |       |   "IOClass" = "AppleSPUHIDDevice"
+    | |   |       |       |   "historical buffer defers queue start" = Yes
+    | |   |       |       |   "Transport" = "SPU"
+    | |   |       |       |   "IOPersonalityPublisher" = "com.apple.driver.AppleSPU"
+    | |   |       |       |   "IOMatchedAtBoot" = Yes
+    | |   |       |       |   "IOReportLegendPublic" = Yes
+    | |   |       |       |   "MaxInputReportSize" = 5
+    | |   |       |       |   "IOProviderClass" = "AppleSPUHIDInterface"
+    | |   |       |       |   "Manufacturer" = "Apple"
+    | |   |       |       |   "Built-In" = Yes
+    | |   |       |       |   "DeviceUsagePairs" = ({"DeviceUsagePage"=65292,"DeviceUsage"=1})
+    | |   |       |       |   "IOProbeScore" = 0
+    | |   |       |       |   "ReportDescriptor" = <060cff0901a1018500150026ff00750895058102c0>
+    | |   |       |       |   "MaxOutputReportSize" = 0
+--
+    | |   |             +-o AppleSPUHIDDevice  <class AppleSPUHIDDevice, id 0x100000a38, registered, matched, active, busy 0 (215 ms), retain 7>
+    | |   |               | {
+    | |   |               |   "IOMatchedAtBoot" = Yes
+    | |   |               |   "PrimaryUsagePage" = 65280
+    | |   |               |   "MaxInputReportSize" = 14
+    | |   |               |   "IOUserClientClass" = "IOHIDLibUserClient"
+    | |   |               |   "ReportDescriptor" = <0600ff0a0500a101150026ff007508950e8102c0>
+    | |   |               |   "VendorID" = 1452
+    | |   |               |   "Built-In" = Yes
+    | |   |               |   "MaxFeatureReportSize" = 0
+    | |   |               |   "SerialNumber" = ""
+    | |   |               |   "Transport" = "SPU"
+    | |   |               |   "Elements" = ({"ReportID"=0,"ElementCookie"=1,"CollectionType"=1,"Type"=513,"VariableSize"=0,"UsagePage"=65280,"Usage"=5},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=0,"IsArray"=Yes,"Type"=5,"Size"=0,"Min"=0,"Flags"=0,"ReportID"=0,"Usage"=18446744073709551615,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=0,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=0,"ElementCookie"=3},{"VariableSize"=0,"UnitExponent"=0,"IsRelative"=No,"UsagePage"=0,"Max"=1,"IsArray"=Yes,"Type"=5,"Size"=1,"Min"=0,"Flags"=0,"ReportID"=0,"Usage"=0,"ReportCount"=1,"Unit"=0,"HasNullState"=No,"ReportSize"=1,"HasPreferredState"=Yes,"IsNonLinear"=No,"ScaledMin"=0,"IsWrapping"=No,"ScaledMax"=1,"ElementCookie"=2})
+    | |   |               |   "HIDRMDeviceState" = "Allowed"
+    | |   |               |   "Manufacturer" = "Apple"
+    | |   |               |   "ProductID" = 33028

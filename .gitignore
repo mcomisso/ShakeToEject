@@ -1,0 +1,24 @@
+# Xcode build artifacts
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdatad/
+
+# XcodeGen generates this — treat as derived
+ShakeToEject.xcodeproj/
+
+# Swift Package Manager
+.swiftpm/
+.build/
+Package.resolved
+
+# macOS
+.DS_Store
+
+# User-local
+*.swp
+*.swo
+*~
+
+# Local overrides
+project.local.yml

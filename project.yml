@@ -1,0 +1,109 @@
+name: ShakeToEject
+options:
+  bundleIdPrefix: com.mcsoftware
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: false
+  indentWidth: 4
+  tabWidth: 4
+  xcodeVersion: "26.0"
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    ENABLE_HARDENED_RUNTIME: YES
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGN_IDENTITY: "Apple Development"
+    DEAD_CODE_STRIPPING: YES
+    CLANG_ENABLE_MODULES: YES
+    SWIFT_STRICT_CONCURRENCY: complete
+
+targets:
+  ShakeToEject:
+    type: application
+    platform: macOS
+    sources:
+      - path: App
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mcsoftware.ShakeToEject
+        PRODUCT_NAME: ShakeToEject
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_LSUIElement: YES
+        INFOPLIST_KEY_CFBundleDisplayName: ShakeToEject
+        INFOPLIST_KEY_NSHumanReadableCopyright: "© 2026 Matteo Comisso. MIT licensed."
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        COMBINE_HIDPI_IMAGES: YES
+        CODE_SIGN_ENTITLEMENTS: App/ShakeToEject.entitlements
+    dependencies:
+      - target: ShakeToEjectHelper
+        embed: false
+        link: false
+    postBuildScripts:
+      - name: "Embed Privileged Helper"
+        runOnlyWhenInstalling: false
+        inputFiles:
+          - $(BUILT_PRODUCTS_DIR)/com.mcsoftware.ShakeToEject.Helper
+          - $(SRCROOT)/Helper/Launchd/com.mcsoftware.ShakeToEject.Helper.plist
+        outputFiles:
+          - $(BUILT_PRODUCTS_DIR)/$(FULL_PRODUCT_NAME)/Contents/MacOS/com.mcsoftware.ShakeToEject.Helper
+          - $(BUILT_PRODUCTS_DIR)/$(FULL_PRODUCT_NAME)/Contents/Library/LaunchDaemons/com.mcsoftware.ShakeToEject.Helper.plist
+        script: |
+          set -euo pipefail
+          HELPER_SRC="${BUILT_PRODUCTS_DIR}/com.mcsoftware.ShakeToEject.Helper"
+          APP_BUNDLE="${BUILT_PRODUCTS_DIR}/${FULL_PRODUCT_NAME}"
+          HELPER_DEST_DIR="${APP_BUNDLE}/Contents/MacOS"
+          LAUNCHD_DEST_DIR="${APP_BUNDLE}/Contents/Library/LaunchDaemons"
+          LAUNCHD_SRC="${SRCROOT}/Helper/Launchd/com.mcsoftware.ShakeToEject.Helper.plist"
+
+          mkdir -p "${HELPER_DEST_DIR}"
+          mkdir -p "${LAUNCHD_DEST_DIR}"
+
+          cp -f "${HELPER_SRC}" "${HELPER_DEST_DIR}/com.mcsoftware.ShakeToEject.Helper"
+          cp -f "${LAUNCHD_SRC}"  "${LAUNCHD_DEST_DIR}/com.mcsoftware.ShakeToEject.Helper.plist"
+
+          # Re-sign the helper in place so the embedded binary matches the app's signature.
+          if [ "${CODE_SIGNING_REQUIRED:-YES}" = "YES" ]; then
+              SIGN_ID="${EXPANDED_CODE_SIGN_IDENTITY:-${CODE_SIGN_IDENTITY:-}}"
+              if [ -z "${SIGN_ID}" ]; then
+                  echo "error: no code signing identity resolved for helper embed step." >&2
+                  echo "       set DEVELOPMENT_TEAM in project.yml or select a team in Xcode." >&2
+                  exit 1
+              fi
+
+              # Debug builds skip the secure timestamp so the script works offline
+              # and on machines without access to Apple's timestamp server. Release
+              # builds use the default secure timestamp so the bundle can be notarised.
+              if [ "${CONFIGURATION}" = "Debug" ]; then
+                  codesign --force --sign "${SIGN_ID}" \
+                      --entitlements "${SRCROOT}/Helper/Helper.entitlements" \
+                      --options runtime \
+                      --timestamp=none \
+                      "${HELPER_DEST_DIR}/com.mcsoftware.ShakeToEject.Helper"
+              else
+                  codesign --force --sign "${SIGN_ID}" \
+                      --entitlements "${SRCROOT}/Helper/Helper.entitlements" \
+                      --options runtime \
+                      "${HELPER_DEST_DIR}/com.mcsoftware.ShakeToEject.Helper"
+              fi
+          fi
+
+  ShakeToEjectHelper:
+    type: tool
+    platform: macOS
+    sources:
+      - path: Helper
+        excludes:
+          - "Launchd/**"
+          - "Helper.entitlements"
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_NAME: com.mcsoftware.ShakeToEject.Helper
+        PRODUCT_BUNDLE_IDENTIFIER: com.mcsoftware.ShakeToEject.Helper
+        SKIP_INSTALL: YES
+        CODE_SIGN_ENTITLEMENTS: Helper/Helper.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
