@@ -3,6 +3,7 @@ import SwiftUI
 struct MenuBarContent: View {
     let sensor: SensorService
     let drives: DriveMonitor
+    let warningCoordinator: WarningCoordinator
 
     var body: some View {
         Text("ShakeToEject \(Bundle.main.shortVersion)")
@@ -27,6 +28,12 @@ struct MenuBarContent: View {
             Button("Eject All \(drives.drives.count) Drive\(drives.drives.count == 1 ? "" : "s")") {
                 drives.ejectAll()
             }
+        }
+
+        Divider()
+
+        Button("Simulate Shake (dev)") {
+            warningCoordinator.trigger(force: true)
         }
 
         Divider()
