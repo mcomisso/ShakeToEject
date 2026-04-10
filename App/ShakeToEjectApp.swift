@@ -29,6 +29,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     )
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Wire real shake events to the warning flow. `trigger()` is
+        // a no-op when no drives are mounted (force: false), so shaking
+        // the laptop with nothing plugged in stays silent.
+        sensor.onShake = { [weak self] _ in
+            self?.warningCoordinator.trigger()
+        }
         sensor.start()
         drives.start()
         _ = warningCoordinator // force lazy init

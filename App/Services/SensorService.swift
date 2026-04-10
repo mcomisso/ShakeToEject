@@ -16,6 +16,13 @@ final class SensorService {
     private(set) var shakeCount: Int = 0
     private(set) var lastShakeMagnitude: Double = 0
 
+    /// Called on the main actor once per detected shake, after the
+    /// observable counters have been updated. Assign this from the
+    /// owning `AppDelegate` to forward events to the warning flow.
+    /// Assign before calling `start()` so the first shake after
+    /// launch finds the handler in place.
+    var onShake: ((ShakeEvent) -> Void)?
+
     private var worker: SensorWorker?
 
     /// Starts the sensor pipeline. No-op if already running.
@@ -29,6 +36,7 @@ final class SensorService {
                 guard let self else { return }
                 self.shakeCount += 1
                 self.lastShakeMagnitude = event.magnitude
+                self.onShake?(event)
             }
         }
         newWorker.start()
