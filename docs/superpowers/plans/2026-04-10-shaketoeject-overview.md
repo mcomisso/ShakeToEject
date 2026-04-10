@@ -32,300 +32,125 @@ or uses portable SSDs.
   Intel, no A-series.
 - **macOS:** 14.0 Sonoma or later (deployment target). Developed and tested
   on macOS 26.
-- **Privileges:** The privileged helper must run as root to open the IOKit
-  HID device. The main app runs as the user.
+- **Privileges:** none beyond a code-signed unprivileged process. Phase 1
+  discovered that on macOS 26 the SPU driver wake step works without root
+  when the calling process is code-signed.
 
 ## Architecture
 
-Two binaries packaged in one app bundle:
+**Single app target.** The original plan called for a two-target split (SwiftUI menu bar app + privileged `SMAppService` launch daemon talking over XPC) because we believed IOKit HID access to the BMI286 required root. Phase 1 disproved that assumption on macOS 26: a code-signed unprivileged process can successfully call `IORegistryEntrySetCFProperty` on `AppleSPUHIDDriver` services and receive input reports. Phase 3 collapsed the architecture to one target and deleted the helper wholesale.
 
-1. **`ShakeToEject.app`** — SwiftUI menu bar application (`LSUIElement` true,
-   no Dock icon). Runs in user context. Owns all UI, settings storage, drive
-   monitoring, drive ejection, and the warning/countdown flow.
+All code now runs in `ShakeToEject.app`:
 
-2. **`com.mcsoftware.ShakeToEject.Helper`** — privileged launch daemon embedded
-   at `Contents/MacOS/com.mcsoftware.ShakeToEject.Helper` inside the app
-   bundle. Registered with launchd via `SMAppService.daemon(plistName:)`
-   (macOS 13+ replacement for the deprecated `SMJobBless`). Runs as root. Only
-   reads the accelerometer and runs shake detection — nothing else. Publishes
-   events to the app over XPC.
+- The SwiftUI app shell (`@main`, `MenuBarExtra`, `NSApplicationDelegateAdaptor`).
+- The sensor pipeline (`AccelerometerReader` → `ShakeDetector`) on a dedicated worker thread with its own `CFRunLoop`.
+- The drive subsystem (`DriveMonitor` + `DriveEjector`) on the main dispatch queue via `DASessionSetDispatchQueue`.
+- The warning/countdown overlay (Phase 5) and its sound assets.
+- The settings UI and persistence (Phase 8).
 
-### Why this split
-
-- Reading the IMU requires root; ejecting drives does not (`DiskArbitration`
-  works fine as the user).
-- Keeping the privileged surface tiny (one sensor read loop + detection math)
-  minimises the security blast radius.
-- The app stays sandbox-friendly (even if we do not enable App Sandbox in v1,
-  we preserve the option).
-- The helper has no AppKit, no SwiftUI, no third-party dependencies. It is a
-  plain `CommandLineTool` target.
-
-### Communication
-
-`NSXPCConnection` over a Mach service named
-`com.mcsoftware.ShakeToEject.Helper`. The connection is declared in the
-daemon plist under `MachServices`.
-
-Two protocols in `Shared/HelperProtocol.swift`:
-
-- `HelperProtocol` (helper exports to app): `getVersion`, `arm(sensitivity:)`,
-  `disarm`, `updateSensitivity(_:)`.
-- `HelperClientProtocol` (app exports to helper): `shakeDetected(magnitude:)`,
-  `accelSample(x:y:z:)` (for the live visualisation in the UI).
+**No XPC. No SMAppService. No launch daemon plist.** If Apple ever re-tightens the privilege requirement on `AppleSPUHIDDriver` in a future macOS release, the `Helper/` directory and the `SMAppService` registration can be reconstructed from the Phase 0 / Phase 1 plan documents — the approach is fully documented in git history.
 
 ### Control flow
 
-1. App launches. Registers helper via `SMAppService` if not already
-   registered. Waits for user to approve in System Settings → Login Items.
-2. App subscribes to DiskArbitration for drive mount/unmount events.
-3. When at least one external drive is mounted, app calls `helper.arm()`.
-4. Helper opens the HID device, starts receiving samples at ~100 Hz, runs
-   shake detection with the configured sensitivity.
-5. On detection, helper calls `client.shakeDetected(magnitude:)`.
-6. App shows a full-screen warning overlay window with a countdown
-   (configurable) and plays the warning sound.
-7. If the user clicks Cancel or presses Escape, the overlay closes. The
-   helper stays armed.
-8. If the countdown completes, the app ejects all mounted external drives via
-   DiskArbitration and plays an ejection confirmation sound.
-9. When the last external drive unmounts, app calls `helper.disarm()` and the
-   helper stops the HID read loop to save power.
+1. App launches. `AppDelegate` starts `SensorService` and `DriveMonitor`.
+2. `SensorService` spins up a dedicated worker thread, wakes the SPU driver, opens the HID device, and begins streaming samples at ~800 Hz. `ShakeDetector` ingests every sample.
+3. `DriveMonitor`'s `DASession` (dispatch queue = main) publishes drive appear/disappear events. The observable `drives` array drives the menu bar popover.
+4. When a shake event fires (Phase 6 wiring), the app shows a full-screen warning overlay with a countdown and plays the warning sound.
+5. If the user clicks Cancel or presses Escape, the overlay closes. Cooldown applies to prevent immediate re-fire.
+6. If the countdown completes, `DriveEjector.unmountAndEject` runs on every drive; the drives disappear from the list as DiskArbitration notifies us of their departure.
+7. Phase 7 gates the sensor on drive presence: the sensor only runs while at least one external drive is mounted.
 
 ## Tech Stack
 
-- **Language:** Swift 6
-- **UI:** SwiftUI, `MenuBarExtra`, `@Observable`
-- **App target:** macOS 14+
-- **Project generator:** XcodeGen (`project.yml` is the source of truth)
-- **Low-level sensor:** IOKit HID framework (`IOHIDManager`,
-  `IOHIDDeviceRegisterInputReportCallback`), likely via a small Swift wrapper
-  with a `@convention(c)` callback
-- **Drive enumeration/ejection:** `DiskArbitration.framework`
-  (`DASessionCreate`, `DADiskCreateFromBSDName`, `DADiskUnmount`,
-  `DADiskEject`)
-- **Privileged helper registration:** `ServiceManagement.framework`
-  (`SMAppService.daemon(plistName:)`)
-- **IPC:** `NSXPCConnection` / `NSXPCListener`
-- **Audio:** `AVAudioPlayer`
-- **Settings:** `UserDefaults` + `@Observable` store
-- **Testing:** Swift Testing (preferred) or XCTest where needed
+- **Language:** Swift 6, strict concurrency enabled
+- **UI:** SwiftUI, `MenuBarExtra`, `@Observable`, `NSApplicationDelegateAdaptor`
+- **App target:** macOS 14+ deployment, developed on macOS 26 / Xcode 26
+- **Project generator:** XcodeGen (`project.yml` is the source of truth; `.xcodeproj` is git-ignored)
+- **Low-level sensor:** IOKit HID (`IOHIDManager`, `IOHIDDeviceRegisterInputReportCallback`), plus `IOServiceMatching("AppleSPUHIDDriver")` + `IORegistryEntrySetCFProperty` for the driver wake step
+- **Drive enumeration/ejection:** `DiskArbitration.framework` (`DASession`, `DADiskCopyDescription`, `DADiskUnmount`, `DADiskEject`), imported via `@preconcurrency`
+- **Audio:** `AVAudioPlayer` (Phase 5)
+- **Settings:** `UserDefaults` + `@Observable` store (Phase 8)
+- **Testing:** Swift Testing
 
 ## File Structure
 
 ```
 ShakeToEject/
 ├── project.yml                                # XcodeGen source of truth
-├── README.md
-├── LICENSE                                    # MIT (to match spank/library deps)
-├── .gitignore
+├── README.md                                  # (Phase 9)
+├── LICENSE                                    # MIT (credits olvvier + spank)
+├── .gitignore                                 # ignores ShakeToEject.xcodeproj/
 ├── docs/
-│   └── superpowers/
-│       └── plans/                             # This overview + phase plans
+│   ├── hardware-probe-m1pro.txt               # captured ioreg output
+│   └── superpowers/plans/                     # this overview + phase plans
 │
-├── App/                                       # Main app target
-│   ├── ShakeToEjectApp.swift                  # @main, MenuBarExtra scene
-│   ├── Info.plist                             # LSUIElement = true
-│   ├── ShakeToEject.entitlements
-│   ├── Assets.xcassets/                       # Menu bar icon, app icon
+├── App/                                       # main app target (only target)
+│   ├── ShakeToEjectApp.swift                  # @main + AppDelegate
+│   ├── ShakeToEject.entitlements              # sandbox off
+│   ├── Assets.xcassets/                       # (Phase 9)
 │   │
 │   ├── MenuBar/
-│   │   └── MenuBarContent.swift               # SwiftUI content inside MenuBarExtra
+│   │   └── MenuBarContent.swift               # popover: status, drives, events
 │   │
-│   ├── Windows/
-│   │   ├── DashboardWindow.swift              # Settings/status window
-│   │   └── WarningOverlayWindow.swift         # Borderless full-screen warning
+│   ├── Windows/                               # (Phase 5, 8)
+│   │   ├── WarningOverlayWindow.swift         # borderless full-screen warning
+│   │   └── DashboardWindow.swift              # settings window
 │   │
-│   ├── Views/
-│   │   ├── DashboardView.swift                # Main window body
-│   │   ├── DriveListView.swift                # Live external drives
-│   │   ├── AccelerometerView.swift            # Live 3-axis visualisation
+│   ├── Views/                                 # (Phases 5, 8)
+│   │   ├── WarningView.swift
+│   │   ├── DashboardView.swift
+│   │   ├── DriveListView.swift
 │   │   ├── SensitivitySliderView.swift
-│   │   ├── CountdownSettingView.swift
-│   │   └── WarningView.swift                  # Big countdown + Cancel
+│   │   └── CountdownSettingView.swift
 │   │
-│   ├── Services/
-│   │   ├── HelperConnection.swift             # XPC client wrapper + client impl
-│   │   ├── HelperInstaller.swift              # SMAppService registration
-│   │   ├── DriveMonitor.swift                 # DiskArbitration observer
-│   │   ├── DriveEjector.swift                 # DiskArbitration ejection
-│   │   ├── SoundPlayer.swift                  # AVAudioPlayer wrapper
-│   │   └── SettingsStore.swift                # @Observable settings
+│   ├── Sensing/                               # sensor pipeline
+│   │   ├── HIDReport.swift                    # pure byte parser
+│   │   ├── AccelerometerReader.swift          # IOKit HID wrapper
+│   │   └── ShakeDetector.swift                # pure algorithm
+│   │
+│   ├── Services/                              # app-wide services
+│   │   ├── SensorWorker.swift                 # dedicated thread + CFRunLoop
+│   │   ├── SensorService.swift                # @Observable facade
+│   │   ├── DriveInfo.swift                    # value type (Phase 4)
+│   │   ├── DriveMonitor.swift                 # @Observable drive list (Phase 4)
+│   │   ├── DriveEjector.swift                 # unmount + eject (Phase 4)
+│   │   ├── SoundPlayer.swift                  # (Phase 5)
+│   │   └── SettingsStore.swift                # (Phase 8)
 │   │
 │   └── Resources/
-│       └── Sounds/                            # User-provided audio assets
+│       └── Sounds/                            # user-provided audio (Phase 5+)
 │
-├── Helper/                                    # Privileged launch daemon target
-│   ├── main.swift                             # Entry point + NSXPCListener
-│   ├── Helper.entitlements
-│   ├── HelperService.swift                    # NSXPCListenerDelegate
-│   ├── AccelerometerReader.swift              # IOKit HID reader
-│   ├── ShakeDetector.swift                    # Pure detection algorithm
-│   ├── HIDReport.swift                        # Byte parsing helpers
-│   └── Launchd/
-│       └── com.mcsoftware.ShakeToEject.Helper.plist
-│
-├── Shared/                                    # Compiled into both targets
-│   ├── HelperProtocol.swift                   # @objc XPC protocols
-│   ├── AccelerationSample.swift               # Codable sample
-│   └── Constants.swift                        # Bundle IDs, Mach service name
+├── Shared/
+│   └── Constants.swift                        # just appBundleID
 │
 └── Tests/
-    ├── HIDReportTests.swift                   # Byte parsing (hardware-free)
-    ├── ShakeDetectorTests.swift               # Algorithm (hardware-free)
-    └── SettingsStoreTests.swift
+    ├── HIDReportTests.swift                   # 10 cases
+    └── ShakeDetectorTests.swift               # 12 cases
 ```
 
 ## Phase Roadmap
 
-Each phase produces working, independently testable software. Each is
-captured in its own plan file that the executing agent follows step-by-step.
+**Completed:**
 
-### Phase 0 — Scaffolding & Hardware Verification
+- **Phase 0** — XcodeGen scaffolding, menu bar app stub, hardware verification (commit `fe1eb71`)
+- **Phase 1** — IOKit HID accelerometer reader with `HIDReport` parser + 10 tests (commit `6a3aedf`)
+- **Phase 2** — pure `ShakeDetector` algorithm with 12 tests + `--detect` CLI mode (commit `79c786d`)
+- **Phase 3** — collapse helper target into the app, add `SensorWorker` + `SensorService`, menu bar shake counter (commit `b1b3e81`)
 
-Migrate the stock Xcode template to XcodeGen with two targets (app +
-helper). App launches as a menu bar app with `LSUIElement=true`. Helper
-target builds as a command line tool and is embedded in the app bundle via
-a Copy Files phase. Verify the M1 Pro has the IMU via `ioreg`. Strip all
-SwiftData template code.
+**Remaining:**
 
-**Exit criteria:**
-- `xcodegen generate && xcodebuild -scheme ShakeToEject build` succeeds.
-- App launches, shows a menu bar icon, quits cleanly.
-- Helper binary exists at `Contents/MacOS/com.mcsoftware.ShakeToEject.Helper`
-  inside the built app bundle.
-- `ioreg -l -w0 | grep -A5 AppleSPUHIDDevice` shows the sensor on the dev
-  machine.
-
-**Plan file:** `2026-04-10-shaketoeject-phase-0-scaffolding.md`
-
-### Phase 1 — IOKit HID Accelerometer Reader (Helper only)
-
-In the helper, implement `AccelerometerReader` that opens the BMI286 IMU via
-`IOHIDManager` with matching criteria (vendor usage page `0xFF00`, usage 3),
-registers an input report callback, parses 22-byte HID reports into g-force
-samples, and prints them to stdout when the helper runs as a standalone
-binary under `sudo`. Add `HIDReport` byte-parsing unit tests.
-
-**Exit criteria:**
-- `sudo ./com.mcsoftware.ShakeToEject.Helper --print` streams x/y/z in g at
-  ~100 Hz.
-- `HIDReportTests` passes without any hardware access.
-
-### Phase 2 — Shake Detection Algorithm (Pure, Hardware-free)
-
-Implement `ShakeDetector` as a pure type that ingests samples, removes
-gravity, computes dynamic magnitude, applies a configurable threshold with
-debounce cooldown, and emits discrete shake events. All tested with
-synthetic sample sequences (at-rest, drift, sharp spike, sustained motion,
-debounce window). No hardware needed for tests.
-
-**Exit criteria:**
-- `ShakeDetectorTests` covers: no-event-at-rest, event-on-spike, respects
-  debounce cooldown, sensitivity scaling.
-- Helper `--print` mode can flip to `--detect` mode and logs detected shakes
-  with magnitudes.
-
-### Phase 3 — XPC Listener in the Helper
-
-Define `HelperProtocol` and `HelperClientProtocol` in `Shared/`. Helper sets
-up `NSXPCListener(machServiceName:)` and implements `getVersion`, `arm`,
-`disarm`. `arm` starts the reader+detector; `disarm` stops. On detection,
-the helper calls back to the connected client's `shakeDetected`.
-
-**Exit criteria:**
-- A tiny test client (a throwaway command line tool, committed or not) can
-  connect to the helper, call `getVersion`, call `arm`, and receive shake
-  events.
-
-### Phase 4 — SMAppService Helper Registration (App side)
-
-App gains `HelperInstaller` which wraps `SMAppService.daemon(plistName:)`.
-Menu bar has an "Install Helper" button that triggers registration, opens
-System Settings if approval is needed, and shows install status. App has a
-`HelperConnection` that creates an `NSXPCConnection` to the helper's Mach
-service. A dev-only menu item calls `helper.getVersion()` and displays it.
-
-**Exit criteria:**
-- Fresh install: click Install, get prompted in System Settings, enable,
-  click "Ping Helper" → see version string.
-- Uninstall: click Uninstall, helper disappears from `launchctl list`.
-
-### Phase 5 — DiskArbitration Drive Monitor & Ejector (App side)
-
-Implement `DriveMonitor` (observes `kDADiskAppearedCallback` and
-`kDADiskDisappearedCallback` on a private `DASession`, filters to external
-volumes, publishes an `@Observable` list) and `DriveEjector` (unmounts then
-ejects via `DADiskUnmount` + `DADiskEject`). Dashboard window shows the
-live list with an "Eject All" button.
-
-**Exit criteria:**
-- Plug a USB drive → appears in list within 1 s. Unplug → disappears.
-- Click Eject All → drive is safely ejected, no system warning dialog.
-
-### Phase 6 — Warning Overlay + Countdown + Sound
-
-Implement a borderless, full-screen, always-on-top `WarningOverlayWindow`
-that animates in with a big countdown, a playful "CANCEL" button, and
-cancellable keyboard shortcut (Esc). Sound plays via `SoundPlayer` with a
-placeholder system sound until user adds the real asset. Dev menu item lets
-us trigger the flow without shaking the laptop.
-
-**Exit criteria:**
-- Dev menu → "Simulate Shake" → overlay appears, countdown runs, sound
-  plays.
-- Pressing Escape or clicking Cancel aborts the flow.
-- Countdown completing triggers `DriveEjector.ejectAll()`.
-
-### Phase 7 — Menu Bar & Settings UI
-
-Menu bar icon reflects arm state (armed/disarmed/no drives). Menu has:
-Status summary, Arm/Disarm toggle, Open Dashboard, Quit. Dashboard window
-has: arm toggle, sensitivity slider (0.05–0.5 g), countdown length stepper
-(1–30 s), drive list, live accelerometer preview (Phase 9 polishes the
-viz), install/uninstall helper buttons. All settings persisted via
-`SettingsStore`.
-
-**Exit criteria:**
-- Settings round-trip across app relaunch.
-- Arming/disarming via UI actually starts/stops the helper loop (verify in
-  `log stream --predicate 'subsystem == "com.mcsoftware.ShakeToEject.Helper"'`).
-
-### Phase 8 — Auto-Arm Integration
-
-Wire `DriveMonitor` → `HelperConnection`: when drive count goes from 0 to
-1, call `helper.arm()`. When it goes from 1 to 0, call `helper.disarm()`.
-User can still manually force-disarm via menu, in which case auto-arm is
-suppressed until the next drive event.
-
-**Exit criteria:**
-- Plug a drive, laptop shake triggers warning. Eject the drive, shake no
-  longer triggers.
-
-### Phase 9 — Playful Polish
-
-Live accelerometer sparkline or 3D cube in the dashboard. Drives "shake
-off" the list with a SwiftUI animation when ejected. Custom menu bar icon
-that subtly bounces on shake detection. Playful copy in the warning
-overlay. Launch-at-login via `SMAppService.mainApp.register()`. README with
-install instructions, licence, credits, sensor source references.
-
-**Exit criteria:**
-- Visual QA passes: app feels like a toy, not a utility.
-- README is ready for the initial public release.
+- **Phase 4** — DiskArbitration: `DriveInfo`, `DriveMonitor` (observable drive list), `DriveEjector` (unmount + eject), menu bar "Eject All" button. See `2026-04-10-shaketoeject-phase-4-drives.md`.
+- **Phase 5** — Warning overlay window + countdown + sound player. Dev-only "Simulate Shake" menu item to trigger the flow without physically moving the laptop.
+- **Phase 6** — Wire the sensor pipeline → warning overlay → ejection. End-to-end: shake the laptop → warning appears → countdown runs → drives eject unless cancelled. The app is now functional.
+- **Phase 7** — Auto-arm on drive presence. `SensorService` only runs while at least one external drive is mounted; automatically starts when a drive appears and stops when the last one leaves. Saves battery and cleans up semantics.
+- **Phase 8** — Settings UI + persistence. Dashboard window with threshold slider, countdown length stepper, drive exclusion list. `SettingsStore` via `UserDefaults`. Launch at login via `SMAppService.mainApp.register()`.
+- **Phase 9** — Playful polish. Custom menu bar icon, animated shake visualisation, drives "shake off" ejection animation, README, app icon, optional Liquid Glass effects for iOS 26-era UI.
 
 ## Cross-cutting Concerns
 
 ### Signing
 
-SMAppService requires both the app and the embedded daemon to be signed
-with the **same Team ID**, even in dev. A free personal Apple Developer
-account (no paid membership needed) provides a `Development` certificate
-which is sufficient for local builds. For public releases we will need a
-paid Developer ID to notarise for distribution outside the App Store.
-
-Phase 0 documents how to configure the signing identity in `project.yml`
-under `targets.*.settings.base.DEVELOPMENT_TEAM`.
+The app is code-signed with the developer's Team ID (baked into `project.yml` as `DEVELOPMENT_TEAM`). Code signing is **required** — Phase 1 verified that only code-signed binaries can successfully wake the SPU driver via `IORegistryEntrySetCFProperty`. Ad-hoc signing also works for local dev. Distribution will require a paid Developer ID and notarisation; the Debug-vs-Release `--timestamp=none` conditional in the `codesign` invocation (now removed with the helper) was originally designed to handle this.
 
 ### Licensing of Third-Party Work
 
@@ -337,20 +162,21 @@ code directly; we reimplement the byte-parsing and callback setup in Swift.
 
 Placeholder uses `NSSound(named: "Funk")` (system sound). User will add
 `warning.wav` and `ejected.wav` under `App/Resources/Sounds/` later. The
-`SoundPlayer` API is stable so swapping in real assets is a drop-in.
+`SoundPlayer` API will be stable so swapping in real assets is a drop-in.
 
 ### Sandbox
 
-v1 ships with App Sandbox **off** to keep the SMAppService + XPC + Mach
-lookup path as simple as possible. We can revisit sandboxing in a later
-iteration if needed.
+v1 ships with App Sandbox **off**. DiskArbitration ejection works under
+sandbox with the right temporary exceptions, but IOKit HID access to the
+SPU driver properties is less certain — we can revisit sandboxing after
+Phase 9 if it proves worth the investigation.
 
-## Open Questions Before Phase 0 Starts
+## Discoveries worth remembering
 
-1. **Apple Developer account** — do you have a free personal team
-   configured in Xcode? We need a Team ID for signing the helper.
-2. **Hardware smoke test** — please run
-   `ioreg -l -w0 | grep -A5 AppleSPUHIDDevice` and paste the output to
-   confirm the sensor exists on this specific M1 Pro unit.
-3. **Bundle ID prefix** — plan assumes `com.mcsoftware`. Happy with that or
-   prefer something else (e.g. `dev.matcom`)?
+1. **macOS 26 allows unprivileged SPU HID access for code-signed processes.** Setting `SensorPropertyReportingState`, `SensorPropertyPowerState`, and `ReportInterval` on `AppleSPUHIDDriver` services via `IORegistryEntrySetCFProperty` works from a regular user process on M1 Pro — no sudo required. This contradicts `olvvier/apple-silicon-accelerometer`'s published "requires root" note and was the basis for the Phase 3 architecture pivot. See `docs/superpowers/plans/2026-04-10-shaketoeject-phase-1-hid-reader.md` "Discoveries during execution" for the full context.
+
+2. **Hardware match criteria are not specific enough alone.** `{VendorID: 1452, UsagePage: 0xFF00, Usage: 3}` on M1 Pro matches both the real BMI286 accelerometer **and** the Apple Internal Keyboard/Trackpad. Disambiguate via `MaxInputReportSize == 22` after enumeration. This is baked into `AccelerometerReader.swift`.
+
+3. **The gravity axis on M1 Pro is -y, not -z.** Irrelevant for `ShakeDetector` (orientation-agnostic magnitude), but important for any future "which way is down?" UI.
+
+4. **Native sample rate is ~800 Hz, not the ~100 Hz suggested by the olvvier Python library.** They decimate 8:1; we don't. `ShakeDetector.cooldownSamples` defaults to 800 (= ~1 second at the native rate).

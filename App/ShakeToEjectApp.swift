@@ -6,7 +6,10 @@ struct ShakeToEjectApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            MenuBarContent(sensor: appDelegate.sensor)
+            MenuBarContent(
+                sensor: appDelegate.sensor,
+                drives: appDelegate.drives
+            )
         } label: {
             Image(systemName: "eject.circle")
         }
@@ -17,12 +20,15 @@ struct ShakeToEjectApp: App {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let sensor = SensorService()
+    let drives = DriveMonitor()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         sensor.start()
+        drives.start()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
         sensor.stop()
+        drives.stop()
     }
 }
