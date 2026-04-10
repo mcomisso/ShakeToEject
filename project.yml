@@ -15,6 +15,7 @@ settings:
     ENABLE_HARDENED_RUNTIME: YES
     CODE_SIGN_STYLE: Automatic
     CODE_SIGN_IDENTITY: "Apple Development"
+    DEVELOPMENT_TEAM: 382G4857JD
     DEAD_CODE_STRIPPING: YES
     CLANG_ENABLE_MODULES: YES
     SWIFT_STRICT_CONCURRENCY: complete
@@ -107,3 +108,20 @@ targets:
         SKIP_INSTALL: YES
         CODE_SIGN_ENTITLEMENTS: Helper/Helper.entitlements
         ENABLE_HARDENED_RUNTIME: YES
+
+  ShakeToEjectTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests
+      - path: Helper/HIDReport.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mcsoftware.ShakeToEject.Tests
+        PRODUCT_NAME: ShakeToEjectTests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        SWIFT_EMIT_LOC_STRINGS: NO
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGN_IDENTITY: ""
