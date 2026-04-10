@@ -35,11 +35,27 @@ final class WarningCoordinator {
     /// or disappear during the countdown.
     private(set) var drivesSnapshot: [DriveInfo] = []
 
+    /// True between `complete()` firing drive ejection and the
+    /// moment all of those drives have actually disappeared from
+    /// `DriveMonitor.drives` (or a safety timeout expires). While
+    /// this flag is set, `trigger()` is a no-op so a laptop that
+    /// keeps moving during the post-countdown ejection window does
+    /// not produce a second overlay on top of drives that are
+    /// already on their way out.
+    private(set) var isEjecting: Bool = false
+
+    /// Safety timeout on the ejection watcher, in seconds. If a
+    /// drive dissents and never disappears, we clear `isEjecting`
+    /// after this interval so the user is not stuck with a
+    /// permanently-silent app.
+    static let ejectionWatcherTimeoutSeconds: Double = 10.0
+
     private let driveMonitor: DriveMonitor
     private let soundPlayer: SoundPlayer
 
     private var window: WarningOverlayWindow?
     private var countdownTask: Task<Void, Never>?
+    private var ejectingWatchTask: Task<Void, Never>?
 
     init(driveMonitor: DriveMonitor, soundPlayer: SoundPlayer) {
         self.driveMonitor = driveMonitor
@@ -57,6 +73,11 @@ final class WarningCoordinator {
     /// the flow can be exercised without a physical drive plugged in.
     func trigger(countdownSeconds: Int = 5, force: Bool = false) {
         guard !isShowing else { return }
+
+        guard !isEjecting else {
+            NSLog("[warning] trigger ignored — ejection in progress")
+            return
+        }
 
         drivesSnapshot = driveMonitor.drives
 
@@ -87,11 +108,19 @@ final class WarningCoordinator {
     // MARK: - Private flow
 
     private func complete() {
-        NSLog("[warning] countdown complete — ejecting \(drivesSnapshot.count) drive(s)")
+        let expectedBSDNames = Set(drivesSnapshot.map(\.id))
+        NSLog("[warning] countdown complete — ejecting \(expectedBSDNames.count) drive(s)")
         soundPlayer.playEjected()
         driveMonitor.ejectAll()
         countdownTask = nil
         tearDown()
+
+        // Enter the ejection-in-progress grace window so shakes during
+        // the actual unmount + eject work are suppressed.
+        if !expectedBSDNames.isEmpty {
+            isEjecting = true
+            startEjectionWatcher(expectedBSDNames: expectedBSDNames)
+        }
     }
 
     private func tearDown() {
@@ -100,6 +129,32 @@ final class WarningCoordinator {
         secondsRemaining = 0
         totalSeconds = 0
         drivesSnapshot = []
+    }
+
+    /// Polls `driveMonitor.drives` until every BSD name in
+    /// `expectedBSDNames` has disappeared from the live list, or
+    /// until `ejectionWatcherTimeoutSeconds` elapses. When the loop
+    /// exits it clears `isEjecting` so the next real shake is
+    /// allowed to trigger a fresh warning.
+    private func startEjectionWatcher(expectedBSDNames: Set<String>) {
+        ejectingWatchTask?.cancel()
+        ejectingWatchTask = Task { [weak self] in
+            let deadline = ContinuousClock.now + .seconds(Self.ejectionWatcherTimeoutSeconds)
+            while !Task.isCancelled, ContinuousClock.now < deadline {
+                guard let self else { return }
+                let currentBSDNames = Set(self.driveMonitor.drives.map(\.id))
+                if currentBSDNames.intersection(expectedBSDNames).isEmpty {
+                    NSLog("[warning] ejection complete — all snapshot drives gone")
+                    break
+                }
+                try? await Task.sleep(for: .milliseconds(300))
+            }
+            if ContinuousClock.now >= deadline {
+                NSLog("[warning] ejection watcher timed out after \(Self.ejectionWatcherTimeoutSeconds)s")
+            }
+            self?.isEjecting = false
+            self?.ejectingWatchTask = nil
+        }
     }
 
     private func startCountdown() {
