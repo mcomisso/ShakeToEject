@@ -14,7 +14,8 @@ func printUsage() {
 
     Usage:
       \(programName) --version    Print version and exit
-      \(programName) --print      Stream accelerometer samples to stdout
+      \(programName) --print      Stream raw accelerometer samples to stdout
+      \(programName) --detect     Stream shake events to stdout
                        (diagnostic lines go to stderr — pipe with 2>/dev/null to hide)
 
     """
@@ -49,6 +50,28 @@ if args.contains("--print") {
 
     // CFRunLoopRun() only returns if the run loop is explicitly stopped,
     // which we do not do in --print mode. Unreachable in practice.
+    reader.stop()
+    exit(0)
+}
+
+if args.contains("--detect") {
+    let detector = ShakeDetector(threshold: 0.3, cooldownSamples: 800)
+    let reader = AccelerometerReader { sample in
+        if let event = detector.process(sample) {
+            let line = String(format: "shake! magnitude=%+.4f", event.magnitude)
+            print(line)
+            fflush(stdout)
+        }
+    }
+
+    do {
+        try reader.start()
+    } catch {
+        FileHandle.standardError.write(Data("error: \(error)\n".utf8))
+        exit(1)
+    }
+
+    CFRunLoopRun()
     reader.stop()
     exit(0)
 }
