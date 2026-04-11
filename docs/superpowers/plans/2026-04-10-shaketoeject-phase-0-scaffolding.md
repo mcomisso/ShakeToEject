@@ -25,7 +25,7 @@
 
 - [ ] **Step 1: Delete the stock project and source directories**
 
-Run from the repo root (`/Users/matcom/Developer/MCSoftware/ShakeToEject/ShakeToEject/`):
+Run from the repo root:
 
 ```bash
 rm -rf ShakeToEject.xcodeproj
