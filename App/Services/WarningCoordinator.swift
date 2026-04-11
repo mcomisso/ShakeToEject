@@ -44,6 +44,15 @@ final class WarningCoordinator {
     /// already on their way out.
     private(set) var isEjecting: Bool = false
 
+    /// True while the exit animation is playing after a cancel or
+    /// complete, before the windows are actually `orderOut`'d.
+    /// Views observe this to drive their fade/collapse animations.
+    private(set) var isDismissing: Bool = false
+
+    /// How long to give SwiftUI to play the dismissal animation
+    /// before we tear the windows down.
+    static let dismissAnimationDuration: Double = 0.30
+
     /// One of a small pool of in-character panic lines, picked at
     /// random on each `trigger()` call so successive warnings feel
     /// varied.
@@ -112,13 +121,6 @@ final class WarningCoordinator {
 
         currentPanicLine = Self.panicLines.randomElement() ?? "HOLD ON!"
 
-        // Log the warning style even though only fullscreen is
-        // implemented in Phase 8 — this surfaces future issues when
-        // Phase 9 fills in notch/auto.
-        if settings.warningStyle != .fullscreen {
-            NSLog("[warning] warning style \(settings.warningStyle.rawValue) not yet implemented — falling back to fullscreen")
-        }
-
         soundPlayer.playWarning()
         showWindow()
         startCountdown()
@@ -127,11 +129,11 @@ final class WarningCoordinator {
     /// Aborts the flow — hides the window, cancels the countdown,
     /// does NOT eject drives. Safe to call when not showing.
     func cancel() {
-        guard isShowing else { return }
+        guard isShowing, !isDismissing else { return }
         NSLog("[warning] cancelled by user")
         countdownTask?.cancel()
         countdownTask = nil
-        tearDown()
+        beginDismissal()
     }
 
     // MARK: - Private flow
@@ -143,13 +145,27 @@ final class WarningCoordinator {
         soundPlayer.playEjected()
         driveMonitor.eject(drivesToEject)
         countdownTask = nil
-        tearDown()
 
         // Enter the ejection-in-progress grace window so shakes during
         // the actual unmount + eject work are suppressed.
         if !expectedBSDNames.isEmpty {
             isEjecting = true
             startEjectionWatcher(expectedBSDNames: expectedBSDNames)
+        }
+
+        beginDismissal()
+    }
+
+    /// Starts the exit animation by flipping `isDismissing` and
+    /// schedules the actual window teardown after the animation
+    /// duration so SwiftUI has time to play the fade/collapse.
+    private func beginDismissal() {
+        isDismissing = true
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(Int(Self.dismissAnimationDuration * 1000)))
+            guard let self else { return }
+            self.tearDown()
+            self.isDismissing = false
         }
     }
 

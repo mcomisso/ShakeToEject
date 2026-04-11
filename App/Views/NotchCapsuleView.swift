@@ -30,6 +30,9 @@ struct NotchCapsuleView: View {
             }
             .compositingGroup()
             .cameraShake(amplitude: ShakeAmplitude.subtle)
+            .scaleEffect(coordinator.isDismissing ? 0.3 : 1.0, anchor: .top)
+            .opacity(coordinator.isDismissing ? 0 : 1)
+            .animation(.spring(response: 0.30, dampingFraction: 0.80), value: coordinator.isDismissing)
             .onAppear {
                 withAnimation(.spring(response: 0.45, dampingFraction: 0.65)) {
                     hasExpanded = true

@@ -59,6 +59,8 @@ struct WarningView: View {
             .padding(80)
             .cameraShake(amplitude: currentAmplitude)
         }
+        .opacity(coordinator.isDismissing ? 0 : 1)
+        .animation(.easeOut(duration: 0.25), value: coordinator.isDismissing)
     }
 
     private var panicLevel: Double {
