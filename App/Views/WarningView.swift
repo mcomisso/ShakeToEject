@@ -1,35 +1,40 @@
 import SwiftUI
 
-/// The SwiftUI content of the full-screen warning overlay.
-///
-/// Binds to `WarningCoordinator` for state (`secondsRemaining`,
-/// `drivesSnapshot`) and invokes `coordinator.cancel()` when the
-/// user presses Escape or clicks the Cancel button.
 struct WarningView: View {
     let coordinator: WarningCoordinator
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.85)
+            Color.black.opacity(0.88)
                 .ignoresSafeArea()
 
-            VStack(spacing: 36) {
+            VStack(spacing: 30) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.system(size: 120))
                     .foregroundStyle(.yellow)
                     .symbolEffect(.pulse, options: .repeating)
 
-                Text("SHAKE DETECTED")
+                Text(coordinator.currentPanicLine)
                     .font(.system(size: 56, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
-                    .tracking(4)
+                    .tracking(2)
+                    .multilineTextAlignment(.center)
 
-                Text(ejectingSubtitle)
-                    .font(.system(size: 28, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.85))
+                // Drive character row — pinned in place, jostled by
+                // the camera shake wrapping the whole VStack.
+                HStack(spacing: 24) {
+                    ForEach(coordinator.drivesSnapshot) { drive in
+                        DriveCharacterView(drive: drive, panicLevel: panicLevel)
+                    }
+                    if coordinator.drivesSnapshot.isEmpty {
+                        Text("(dev simulation — no drives)")
+                            .foregroundStyle(.white.opacity(0.6))
+                    }
+                }
+                .padding(.vertical, 12)
 
                 Text("\(coordinator.secondsRemaining)")
-                    .font(.system(size: 240, weight: .black, design: .rounded))
+                    .font(.system(size: 220, weight: .black, design: .rounded))
                     .foregroundStyle(.yellow)
                     .contentTransition(.numericText(countsDown: true))
                     .animation(.snappy, value: coordinator.secondsRemaining)
@@ -52,14 +57,21 @@ struct WarningView: View {
                     .foregroundStyle(.white.opacity(0.6))
             }
             .padding(80)
+            .cameraShake(amplitude: currentAmplitude)
         }
     }
 
-    private var ejectingSubtitle: String {
-        let count = coordinator.drivesSnapshot.count
-        if count == 0 {
-            return "(dev simulation — no drives to eject)"
+    private var panicLevel: Double {
+        let total = max(coordinator.totalSeconds, 1)
+        let elapsed = total - coordinator.secondsRemaining
+        return min(1.0, max(0.0, Double(elapsed) / Double(total)))
+    }
+
+    private var currentAmplitude: CGFloat {
+        // Ramp from worried → panic in the last 2 seconds.
+        if coordinator.secondsRemaining <= 2 && coordinator.secondsRemaining > 0 {
+            return ShakeAmplitude.panic
         }
-        return "Ejecting \(count) drive\(count == 1 ? "" : "s") in"
+        return ShakeAmplitude.worried
     }
 }

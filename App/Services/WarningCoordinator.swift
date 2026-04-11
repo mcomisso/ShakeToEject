@@ -44,6 +44,24 @@ final class WarningCoordinator {
     /// already on their way out.
     private(set) var isEjecting: Bool = false
 
+    /// One of a small pool of in-character panic lines, picked at
+    /// random on each `trigger()` call so successive warnings feel
+    /// varied.
+    private(set) var currentPanicLine: String = ""
+
+    private static let panicLines: [String] = [
+        "THEY MOVED US!!",
+        "QUICK, BEFORE THEY DROP US!",
+        "NOT THE TRASH CAN AGAIN!",
+        "WE HAVEN'T EVEN BEEN BACKED UP!",
+        "EARTHQUAKE!!!",
+        "IS THIS A NORMAL TUESDAY?",
+        "HELP HELP HELP",
+        "UNSTABLE GROUND DETECTED",
+        "PLEASE PUT US DOWN",
+        "WHOA WHOA WHOA",
+    ]
+
     /// Safety timeout on the ejection watcher, in seconds. If a
     /// drive dissents and never disappears, we clear `isEjecting`
     /// after this interval so the user is not stuck with a
@@ -54,7 +72,8 @@ final class WarningCoordinator {
     private let soundPlayer: SoundPlayer
     private let settings: SettingsStore
 
-    private var window: WarningOverlayWindow?
+    private var windows: [NSWindow] = []
+    private let keyMonitor = KeyEventMonitor()
     private var countdownTask: Task<Void, Never>?
     private var ejectingWatchTask: Task<Void, Never>?
 
@@ -88,6 +107,8 @@ final class WarningCoordinator {
         totalSeconds = countdown
         secondsRemaining = countdown
         isShowing = true
+
+        currentPanicLine = Self.panicLines.randomElement() ?? "HOLD ON!"
 
         // Log the warning style even though only fullscreen is
         // implemented in Phase 8 — this surfaces future issues when
@@ -180,15 +201,52 @@ final class WarningCoordinator {
     }
 
     private func showWindow() {
-        let view = WarningView(coordinator: self)
-        let newWindow = WarningOverlayWindow(rootView: view)
-        window = newWindow
+        // Install Esc handler first so it's ready before any
+        // window appears.
+        keyMonitor.install { [weak self] in
+            self?.cancel()
+        }
+
         NSApp.activate(ignoringOtherApps: true)
-        newWindow.makeKeyAndOrderFront(nil)
+
+        let screens = NSScreen.screens
+        let effectiveStyle = settings.warningStyle
+
+        for screen in screens {
+            let hasNotch = NotchDetector.hasNotch(screen)
+            let useNotch: Bool
+
+            switch effectiveStyle {
+            case .fullscreen:
+                useNotch = false
+            case .notch, .auto:
+                useNotch = hasNotch
+            }
+
+            let window: NSWindow
+            if useNotch {
+                let view = NotchCapsuleView(coordinator: self)
+                window = NotchCapsuleWindow(screen: screen, rootView: view)
+            } else {
+                if effectiveStyle == .notch {
+                    NSLog("[warning] notch style requested but screen \(screen.localizedName) has no notch — falling back to fullscreen")
+                }
+                let view = WarningView(coordinator: self)
+                window = WarningOverlayWindow(screen: screen, rootView: view)
+            }
+
+            window.makeKeyAndOrderFront(nil)
+            windows.append(window)
+        }
+
+        NSLog("[warning] presented on \(windows.count) screen(s)")
     }
 
     private func hideWindow() {
-        window?.orderOut(nil)
-        window = nil
+        keyMonitor.remove()
+        for window in windows {
+            window.orderOut(nil)
+        }
+        windows.removeAll()
     }
 }

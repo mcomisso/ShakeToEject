@@ -2,16 +2,12 @@ import AppKit
 import SwiftUI
 
 /// Borderless full-screen always-on-top window that hosts the
-/// `WarningView`. Sized to cover the main screen, positioned at the
-/// `.screenSaver` window level so it draws above menu bars, Dock,
-/// and even other apps in full-screen mode.
-///
-/// `canBecomeKey` is overridden to true so the SwiftUI `keyboardShortcut(.escape)`
-/// on the Cancel button actually receives the Esc keystroke — a
-/// borderless `NSWindow` is non-key by default.
+/// `WarningView` on a specific screen. One instance is created
+/// per display during a warning flow when `.fullscreen` style
+/// is in effect (either by user choice or by fallback from
+/// `.notch` / `.auto` on non-notched screens).
 final class WarningOverlayWindow: NSWindow {
-    init<Content: View>(rootView: Content) {
-        let screen = NSScreen.main ?? NSScreen.screens.first ?? NSScreen()
+    init<Content: View>(screen: NSScreen, rootView: Content) {
         super.init(
             contentRect: screen.frame,
             styleMask: [.borderless],
@@ -30,6 +26,10 @@ final class WarningOverlayWindow: NSWindow {
             .fullScreenAuxiliary,
             .ignoresCycle
         ]
+
+        // Pin the window to the given screen so it draws in the
+        // right place on multi-monitor setups.
+        setFrame(screen.frame, display: false)
 
         contentView = NSHostingView(rootView: rootView)
     }
