@@ -29,12 +29,12 @@ struct CameraShakeModifier: ViewModifier {
 
 /// Named amplitudes for the earthquake effect.
 enum ShakeAmplitude {
-    /// ~1 pt — the laptop sits on a desk, the cat just walked by.
-    static let subtle: CGFloat = 1.0
-    /// ~2.5 pt — during countdown, someone is holding the laptop.
-    static let worried: CGFloat = 2.5
-    /// ~5 pt — final two seconds of the countdown, active shaking.
-    static let panic: CGFloat = 5.0
+    /// ~0.5 pt — the laptop sits on a desk, the cat just walked by.
+    static let subtle: CGFloat = 0.5
+    /// ~1.25 pt — during countdown, someone is holding the laptop.
+    static let worried: CGFloat = 1.25
+    /// ~2.5 pt — final two seconds of the countdown, active shaking.
+    static let panic: CGFloat = 2.5
 }
 
 extension View {

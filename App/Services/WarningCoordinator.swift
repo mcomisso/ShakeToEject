@@ -66,7 +66,7 @@ final class WarningCoordinator {
         "EARTHQUAKE!!!",
         "IS THIS A NORMAL TUESDAY?",
         "HELP HELP HELP",
-        "UNSTABLE GROUND DETECTED",
+        "TELL MY FILES I LOVE THEM",
         "PLEASE PUT US DOWN",
         "WHOA WHOA WHOA",
     ]
@@ -231,6 +231,12 @@ final class WarningCoordinator {
         let screens = NSScreen.screens
         let effectiveStyle = settings.warningStyle
 
+        NSLog("[warning] style=\(effectiveStyle.rawValue), NSScreen.screens.count=\(screens.count)")
+        for (index, screen) in screens.enumerated() {
+            let notchHeight = NotchDetector.notchHeight(for: screen)
+            NSLog("[warning]   screen[\(index)] name=\"\(screen.localizedName)\" frame=\(screen.frame) notchHeight=\(notchHeight)")
+        }
+
         for screen in screens {
             let hasNotch = NotchDetector.hasNotch(screen)
             let useNotch: Bool
@@ -246,9 +252,12 @@ final class WarningCoordinator {
             if useNotch {
                 let view = NotchCapsuleView(coordinator: self)
                 window = NotchCapsuleWindow(screen: screen, rootView: view)
+                NSLog("[warning]   → notch capsule on \"\(screen.localizedName)\"")
             } else {
                 if effectiveStyle == .notch {
-                    NSLog("[warning] notch style requested but screen \(screen.localizedName) has no notch — falling back to fullscreen")
+                    NSLog("[warning]   → notch style requested but \"\(screen.localizedName)\" has no notch — falling back to fullscreen")
+                } else {
+                    NSLog("[warning]   → fullscreen on \"\(screen.localizedName)\"")
                 }
                 let view = WarningView(coordinator: self)
                 window = WarningOverlayWindow(screen: screen, rootView: view)

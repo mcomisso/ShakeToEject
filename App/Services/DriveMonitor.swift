@@ -12,6 +12,19 @@ import Observation
 /// This excludes the boot drive, internal SSDs, and any unmounted
 /// slices that DiskArbitration surfaces.
 ///
+/// **Three callbacks, not two.** We listen for `disk appeared`,
+/// `disk disappeared`, AND `disk description changed` (filtered to
+/// `kDADiskDescriptionVolumePathKey`). The third one is essential
+/// for physical drive plug-ins: the kernel emits `appeared` as soon
+/// as it sees the block device, which is *before* macOS has mounted
+/// the filesystem. At that moment `VolumePath` is nil and the drive
+/// is filtered out. The mount happens milliseconds later and fires
+/// `description changed` — if we don't listen for that, we miss the
+/// drive entirely. App launches only work "the first time" because
+/// DiskArbitration replays `appeared` for already-mounted drives
+/// with the full description including the mount point, masking the
+/// bug for that initial call.
+///
 /// **Threading:** the monitor sets its `DASession`'s dispatch queue to
 /// `DispatchQueue.main`, so every DiskArbitration callback fires on the
 /// main actor. The C callbacks use `MainActor.assumeIsolated` to
@@ -31,8 +44,8 @@ final class DriveMonitor {
     private var disksByBSDName: [String: DADisk] = [:]
 
     /// Starts the DiskArbitration session and registers the appear /
-    /// disappear callbacks. Safe to call multiple times — subsequent
-    /// calls are no-ops.
+    /// disappear / description-changed callbacks. Safe to call
+    /// multiple times — subsequent calls are no-ops.
     func start() {
         guard session == nil else { return }
 
@@ -56,6 +69,20 @@ final class DriveMonitor {
             newSession,
             nil,
             Self.diskDisappearedCallback,
+            context
+        )
+
+        // Listen for volume-path changes so we catch drives that
+        // appear unmounted and then get mounted by macOS a moment
+        // later (the common case for physical plug-ins), and also
+        // the reverse (drives that are unmounted by the user while
+        // still connected).
+        let watchedKeys = [kDADiskDescriptionVolumePathKey] as CFArray
+        DARegisterDiskDescriptionChangedCallback(
+            newSession,
+            nil,
+            watchedKeys,
+            Self.diskDescriptionChangedCallback,
             context
         )
 
@@ -103,7 +130,7 @@ final class DriveMonitor {
         guard let context else { return }
         let monitor = Unmanaged<DriveMonitor>.fromOpaque(context).takeUnretainedValue()
         MainActor.assumeIsolated {
-            monitor.handleDiskAppeared(disk)
+            monitor.reconcile(disk)
         }
     }
 
@@ -115,9 +142,21 @@ final class DriveMonitor {
         }
     }
 
+    private static let diskDescriptionChangedCallback: DADiskDescriptionChangedCallback = { disk, _, context in
+        guard let context else { return }
+        let monitor = Unmanaged<DriveMonitor>.fromOpaque(context).takeUnretainedValue()
+        MainActor.assumeIsolated {
+            monitor.reconcile(disk)
+        }
+    }
+
     // MARK: - Main-actor handlers
 
-    private func handleDiskAppeared(_ disk: DADisk) {
+    /// Re-inspects a disk and updates our tracking to match its
+    /// current state. Called by both the `appeared` callback (first
+    /// time we see the disk) and the `description-changed` callback
+    /// (state changed, e.g. mount point added or removed). Idempotent.
+    private func reconcile(_ disk: DADisk) {
         guard let bsdNameCStr = DADiskGetBSDName(disk) else { return }
         let bsdName = String(cString: bsdNameCStr)
 
@@ -125,31 +164,37 @@ final class DriveMonitor {
         let description = descriptionCF as NSDictionary
 
         let isInternal = (description[kDADiskDescriptionDeviceInternalKey] as? NSNumber)?.boolValue ?? true
-        guard !isInternal else { return }
+        let mountPoint = description[kDADiskDescriptionVolumePathKey] as? URL
 
-        guard let mountPoint = description[kDADiskDescriptionVolumePathKey] as? URL else {
-            // Not a mounted volume — could be the whole-disk entry
-            // (e.g. disk4) that appears alongside its partition slices.
-            // We only track mounted volumes.
-            return
-        }
+        let eligible = !isInternal && mountPoint != nil
 
-        let volumeName = (description[kDADiskDescriptionVolumeNameKey] as? String) ?? "Untitled"
+        if eligible, let mountPoint {
+            let volumeName = (description[kDADiskDescriptionVolumeNameKey] as? String) ?? "Untitled"
+            let info = DriveInfo(
+                id: bsdName,
+                volumeName: volumeName,
+                mountPoint: mountPoint
+            )
 
-        let info = DriveInfo(
-            id: bsdName,
-            volumeName: volumeName,
-            mountPoint: mountPoint
-        )
-
-        disksByBSDName[bsdName] = disk
-        if let existingIndex = drives.firstIndex(where: { $0.id == bsdName }) {
-            drives[existingIndex] = info
+            disksByBSDName[bsdName] = disk
+            if let existingIndex = drives.firstIndex(where: { $0.id == bsdName }) {
+                if drives[existingIndex] != info {
+                    drives[existingIndex] = info
+                    NSLog("[drives] updated: \(bsdName) \"\(volumeName)\" at \(mountPoint.path)")
+                }
+            } else {
+                drives.append(info)
+                NSLog("[drives] added: \(bsdName) \"\(volumeName)\" at \(mountPoint.path)")
+            }
         } else {
-            drives.append(info)
+            // Disk exists but isn't a drive we care about, OR it used
+            // to be eligible and just got unmounted while still
+            // connected. Either way, make sure it's not in our list.
+            if disksByBSDName.removeValue(forKey: bsdName) != nil {
+                drives.removeAll { $0.id == bsdName }
+                NSLog("[drives] removed (unmounted or ineligible): \(bsdName)")
+            }
         }
-
-        NSLog("[drives] appeared: \(bsdName) \"\(volumeName)\" at \(mountPoint.path)")
     }
 
     private func handleDiskDisappeared(_ disk: DADisk) {
