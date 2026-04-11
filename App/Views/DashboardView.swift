@@ -3,6 +3,7 @@ import SwiftUI
 struct DashboardView: View {
     let settings: SettingsStore
     let drives: DriveMonitor
+    let soundPlayer: SoundPlayer
 
     var body: some View {
         Form {
@@ -74,6 +75,22 @@ struct DashboardView: View {
                     }
                 }
                 .pickerStyle(.menu)
+
+                soundPickerRow(
+                    label: "Warning sound",
+                    binding: Binding(
+                        get: { settings.warningSoundName },
+                        set: { settings.warningSoundName = $0 }
+                    )
+                )
+
+                soundPickerRow(
+                    label: "Ejected sound",
+                    binding: Binding(
+                        get: { settings.ejectedSoundName },
+                        set: { settings.ejectedSoundName = $0 }
+                    )
+                )
             }
 
             Section("Drives") {
@@ -154,7 +171,35 @@ struct DashboardView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 520, height: 560)
+        .frame(width: 520, height: 640)
+    }
+
+    /// A Picker + speaker-preview button row used for both the
+    /// warning and ejected sound slots. The picker lists every
+    /// audio file discovered in the app bundle plus a
+    /// "None (silent)" option; the preview button auditions the
+    /// currently-selected sound via `SoundPlayer.preview(name:)`
+    /// without triggering a full warning flow.
+    @ViewBuilder
+    private func soundPickerRow(label: String, binding: Binding<String>) -> some View {
+        HStack {
+            Picker(label, selection: binding) {
+                Text("None (silent)").tag(SettingsStore.silentSoundName)
+                ForEach(SettingsStore.availableSoundNames, id: \.self) { name in
+                    Text(name).tag(name)
+                }
+            }
+            .pickerStyle(.menu)
+
+            Button {
+                soundPlayer.preview(name: binding.wrappedValue)
+            } label: {
+                Image(systemName: "speaker.wave.2.fill")
+            }
+            .buttonStyle(.borderless)
+            .disabled(binding.wrappedValue == SettingsStore.silentSoundName)
+            .help("Preview")
+        }
     }
 }
 

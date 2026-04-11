@@ -27,8 +27,8 @@ struct ShakeToEjectApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let sensor = SensorService()
     let drives = DriveMonitor()
-    let soundPlayer = SoundPlayer()
     let settings = SettingsStore()
+    lazy var soundPlayer = SoundPlayer(settings: settings)
     lazy var warningCoordinator = WarningCoordinator(
         driveMonitor: drives,
         soundPlayer: soundPlayer,
@@ -73,7 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.activate(ignoringOtherApps: true)
             return
         }
-        let view = DashboardView(settings: settings, drives: drives)
+        let view = DashboardView(settings: settings, drives: drives, soundPlayer: soundPlayer)
         let window = DashboardWindow(rootView: view)
         window.center()
         window.makeKeyAndOrderFront(nil)

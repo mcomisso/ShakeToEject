@@ -56,6 +56,8 @@ final class SettingsStore {
         static let warningStyle = "settings.warningStyle"
         static let launchAtLogin = "settings.launchAtLogin"
         static let excludedVolumeNames = "settings.excludedVolumeNames"
+        static let warningSoundName = "settings.warningSoundName"
+        static let ejectedSoundName = "settings.ejectedSoundName"
     }
 
     // MARK: - Defaults
@@ -64,11 +66,36 @@ final class SettingsStore {
     static let defaultCooldownSeconds = 1.0
     static let defaultWarningStyle: WarningStyle = .fullscreen
     static let defaultLaunchAtLogin = false
+    static let defaultWarningSoundName = "sudden-drama"
+    static let defaultEjectedSoundName = "pop"
+
+    /// Empty-string sentinel meaning "play nothing for this slot".
+    /// Used by the dashboard picker's "None (silent)" row.
+    static let silentSoundName = ""
 
     // MARK: - Ranges
     static let countdownRange = 1...30
     static let sensitivityRange = 0.05...1.0
     static let cooldownRange = 0.5...5.0
+
+    // MARK: - Bundled sound enumeration
+
+    /// All audio files found in the app bundle's main Resources
+    /// directory, keyed by base name (no extension). Computed once
+    /// at first access — bundle contents don't change at runtime.
+    /// Sorted alphabetically so the picker order is stable.
+    static let availableSoundNames: [String] = {
+        let extensions = ["mp3", "wav", "m4a", "aiff", "caf"]
+        var names: Set<String> = []
+        for ext in extensions {
+            if let urls = Bundle.main.urls(forResourcesWithExtension: ext, subdirectory: nil) {
+                for url in urls {
+                    names.insert(url.deletingPathExtension().lastPathComponent)
+                }
+            }
+        }
+        return names.sorted()
+    }()
 
     /// The assumed native HID sample rate of the BMI286 accelerometer
     /// on M1 Pro, measured in Phase 1. Cooldown seconds are converted
@@ -116,6 +143,19 @@ final class SettingsStore {
         }
     }
 
+    /// Base filename (no extension) of the audio asset that plays
+    /// when a shake is first detected. Empty string = silent.
+    var warningSoundName: String {
+        didSet { UserDefaults.standard.set(warningSoundName, forKey: Key.warningSoundName) }
+    }
+
+    /// Base filename (no extension) of the audio asset that plays
+    /// when the countdown completes and drives are ejected.
+    /// Empty string = silent.
+    var ejectedSoundName: String {
+        didSet { UserDefaults.standard.set(ejectedSoundName, forKey: Key.ejectedSoundName) }
+    }
+
     // MARK: - Live-update hooks
 
     /// Called on every sensitivity mutation with the new value in g.
@@ -148,6 +188,13 @@ final class SettingsStore {
 
         let storedExcluded = defaults.array(forKey: Key.excludedVolumeNames) as? [String] ?? []
         self.excludedVolumeNames = Set(storedExcluded)
+
+        // `string(forKey:)` returns nil for a missing key, not an
+        // empty string, so we can distinguish "user chose silent"
+        // from "never set" and fall back to the named default in
+        // the latter case.
+        self.warningSoundName = defaults.string(forKey: Key.warningSoundName) ?? Self.defaultWarningSoundName
+        self.ejectedSoundName = defaults.string(forKey: Key.ejectedSoundName) ?? Self.defaultEjectedSoundName
     }
 
     /// Reads the current cooldown value as a detector sample count.
