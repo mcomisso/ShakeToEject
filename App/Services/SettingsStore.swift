@@ -16,8 +16,16 @@ enum WarningStyle: String, CaseIterable, Identifiable, Sendable {
     var label: String {
         switch self {
         case .fullscreen: return "Fullscreen"
-        case .notch: return "Notch (coming in Phase 9)"
-        case .auto: return "Auto (coming in Phase 9)"
+        case .notch: return "Notch (compact)"
+        case .auto: return "Auto"
+        }
+    }
+
+    var detail: String? {
+        switch self {
+        case .fullscreen: return "Full-screen warning, visible on every display."
+        case .notch: return "Compact capsule drops out of the MacBook notch. Non-notched screens fall back to fullscreen."
+        case .auto: return "Notch capsule on notched Macs, fullscreen elsewhere."
         }
     }
 }
@@ -47,6 +55,7 @@ final class SettingsStore {
         static let cooldownSeconds = "settings.cooldownSeconds"
         static let warningStyle = "settings.warningStyle"
         static let launchAtLogin = "settings.launchAtLogin"
+        static let excludedVolumeNames = "settings.excludedVolumeNames"
     }
 
     // MARK: - Defaults
@@ -97,6 +106,16 @@ final class SettingsStore {
         }
     }
 
+    /// Volume names the user has marked as "never auto-eject".
+    /// Drives matching any of these names are skipped by both the
+    /// manual Eject All action and the shake-triggered eject flow,
+    /// and appear with a 🔒 prefix in the menu bar.
+    var excludedVolumeNames: Set<String> {
+        didSet {
+            UserDefaults.standard.set(Array(excludedVolumeNames).sorted(), forKey: Key.excludedVolumeNames)
+        }
+    }
+
     // MARK: - Live-update hooks
 
     /// Called on every sensitivity mutation with the new value in g.
@@ -126,6 +145,9 @@ final class SettingsStore {
         self.warningStyle = WarningStyle(rawValue: storedStyle) ?? Self.defaultWarningStyle
 
         self.launchAtLogin = defaults.bool(forKey: Key.launchAtLogin)
+
+        let storedExcluded = defaults.array(forKey: Key.excludedVolumeNames) as? [String] ?? []
+        self.excludedVolumeNames = Set(storedExcluded)
     }
 
     /// Reads the current cooldown value as a detector sample count.

@@ -85,6 +85,18 @@ final class DriveMonitor {
         }
     }
 
+    /// Unmounts and ejects an explicit subset of drives. Used by
+    /// the shake-triggered flow and the menu bar's Eject All
+    /// button so they can filter out excluded drives before
+    /// telling the monitor to eject.
+    func eject(_ drivesToEject: [DriveInfo]) {
+        NSLog("[drives] eject(\(drivesToEject.count) drive(s))")
+        for drive in drivesToEject {
+            guard let disk = disksByBSDName[drive.id] else { continue }
+            DriveEjector.unmountAndEject(disk)
+        }
+    }
+
     // MARK: - C callback bridges
 
     private static let diskAppearedCallback: DADiskAppearedCallback = { disk, context in

@@ -73,7 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.activate(ignoringOtherApps: true)
             return
         }
-        let view = DashboardView(settings: settings)
+        let view = DashboardView(settings: settings, drives: drives)
         let window = DashboardWindow(rootView: view)
         window.center()
         window.makeKeyAndOrderFront(nil)

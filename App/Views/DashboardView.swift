@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DashboardView: View {
     let settings: SettingsStore
+    let drives: DriveMonitor
 
     var body: some View {
         Form {
@@ -75,6 +76,65 @@ struct DashboardView: View {
                 .pickerStyle(.menu)
             }
 
+            Section("Drives") {
+                let mounted = drives.drives
+                let rememberedNotMounted = settings.excludedVolumeNames
+                    .subtracting(Set(mounted.map(\.volumeName)))
+                    .sorted()
+
+                if mounted.isEmpty && rememberedNotMounted.isEmpty {
+                    Text("No drives to configure")
+                        .foregroundStyle(.secondary)
+                } else {
+                    if !mounted.isEmpty {
+                        ForEach(mounted) { drive in
+                            Toggle(
+                                isOn: Binding(
+                                    get: { !settings.excludedVolumeNames.contains(drive.volumeName) },
+                                    set: { include in
+                                        if include {
+                                            settings.excludedVolumeNames.remove(drive.volumeName)
+                                        } else {
+                                            settings.excludedVolumeNames.insert(drive.volumeName)
+                                        }
+                                    }
+                                )
+                            ) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(drive.volumeName)
+                                    Text(drive.mountPoint.path)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+
+                    if !rememberedNotMounted.isEmpty {
+                        Text("Remembered exclusions (not mounted)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 6)
+
+                        ForEach(rememberedNotMounted, id: \.self) { name in
+                            HStack {
+                                Text("🔒 \(name)")
+                                Spacer()
+                                Button("Forget") {
+                                    settings.excludedVolumeNames.remove(name)
+                                }
+                                .buttonStyle(.borderless)
+                            }
+                        }
+                    }
+
+                    Text("Excluded drives are never auto-ejected, even on shake.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 6)
+                }
+            }
+
             Section("General") {
                 Toggle(
                     "Launch at login",
@@ -94,7 +154,7 @@ struct DashboardView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 480, height: 440)
+        .frame(width: 520, height: 560)
     }
 }
 

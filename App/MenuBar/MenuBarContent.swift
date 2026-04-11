@@ -30,10 +30,17 @@ struct MenuBarContent: View {
                 .foregroundStyle(.secondary)
         } else {
             ForEach(drives.drives) { drive in
-                Text("⏏︎ \(drive.volumeName)")
+                let excluded = settings.excludedVolumeNames.contains(drive.volumeName)
+                Text("\(excluded ? "🔒" : "⏏︎") \(drive.volumeName)")
+                    .foregroundStyle(excluded ? .secondary : .primary)
             }
-            Button("Eject All \(drives.drives.count) Drive\(drives.drives.count == 1 ? "" : "s")") {
-                drives.ejectAll()
+            let ejectable = drives.drives.filter {
+                !settings.excludedVolumeNames.contains($0.volumeName)
+            }
+            if !ejectable.isEmpty {
+                Button("Eject All \(ejectable.count) Drive\(ejectable.count == 1 ? "" : "s")") {
+                    drives.eject(ejectable)
+                }
             }
         }
 

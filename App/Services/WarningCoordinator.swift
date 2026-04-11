@@ -96,10 +96,12 @@ final class WarningCoordinator {
             return
         }
 
-        drivesSnapshot = driveMonitor.drives
+        drivesSnapshot = driveMonitor.drives.filter {
+            !settings.excludedVolumeNames.contains($0.volumeName)
+        }
 
         if drivesSnapshot.isEmpty && !force {
-            NSLog("[warning] trigger ignored — no drives to eject")
+            NSLog("[warning] trigger ignored — no eligible drives to eject")
             return
         }
 
@@ -135,10 +137,11 @@ final class WarningCoordinator {
     // MARK: - Private flow
 
     private func complete() {
-        let expectedBSDNames = Set(drivesSnapshot.map(\.id))
+        let drivesToEject = drivesSnapshot // already filtered at trigger() time
+        let expectedBSDNames = Set(drivesToEject.map(\.id))
         NSLog("[warning] countdown complete — ejecting \(expectedBSDNames.count) drive(s)")
         soundPlayer.playEjected()
-        driveMonitor.ejectAll()
+        driveMonitor.eject(drivesToEject)
         countdownTask = nil
         tearDown()
 
