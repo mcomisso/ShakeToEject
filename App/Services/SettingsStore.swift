@@ -30,6 +30,45 @@ enum WarningStyle: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
+/// What the app does when the accelerometer detects a shake.
+/// The default `.ejectWithWarning` preserves the existing behavior;
+/// the other two modes let users opt into a less aggressive or less
+/// invasive response.
+enum ShakeAction: String, CaseIterable, Identifiable, Sendable {
+    /// Show the warning overlay with countdown and, if not cancelled,
+    /// eject every non-excluded drive. The app's original behavior.
+    case ejectWithWarning
+    /// Show the warning overlay with countdown, but never eject at
+    /// the end. Useful for users who want the reminder without the
+    /// auto-eject, or for testing.
+    case warnOnly
+    /// Skip the fullscreen overlay entirely and post a macOS
+    /// notification instead. Lightweight and non-disruptive; requires
+    /// notification permission the first time it's selected.
+    case notifyOnly
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .ejectWithWarning: return "Warn and eject"
+        case .warnOnly: return "Warn only"
+        case .notifyOnly: return "Notify only"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .ejectWithWarning:
+            return "Show the warning countdown and eject all non-excluded drives if not cancelled."
+        case .warnOnly:
+            return "Show the warning countdown, but never actually eject. Nothing gets unmounted."
+        case .notifyOnly:
+            return "Skip the fullscreen warning. Post a macOS notification instead — less invasive."
+        }
+    }
+}
+
 /// Main-actor-isolated, @Observable facade over `UserDefaults`.
 ///
 /// Every configurable parameter the user can touch lives here. The
@@ -58,6 +97,7 @@ final class SettingsStore {
         static let excludedVolumeNames = "settings.excludedVolumeNames"
         static let warningSoundName = "settings.warningSoundName"
         static let ejectedSoundName = "settings.ejectedSoundName"
+        static let shakeAction = "settings.shakeAction"
     }
 
     // MARK: - Defaults
@@ -68,6 +108,7 @@ final class SettingsStore {
     static let defaultLaunchAtLogin = false
     static let defaultWarningSoundName = "sudden-drama"
     static let defaultEjectedSoundName = "pop"
+    static let defaultShakeAction: ShakeAction = .ejectWithWarning
 
     /// Empty-string sentinel meaning "play nothing for this slot".
     /// Used by the dashboard picker's "None (silent)" row.
@@ -156,6 +197,17 @@ final class SettingsStore {
         didSet { UserDefaults.standard.set(ejectedSoundName, forKey: Key.ejectedSoundName) }
     }
 
+    /// How the app responds when a shake is detected.
+    /// Mutation notifies `onShakeActionChange` so AppDelegate can,
+    /// for example, pre-request notification permission when the
+    /// user switches to `.notifyOnly`.
+    var shakeAction: ShakeAction {
+        didSet {
+            UserDefaults.standard.set(shakeAction.rawValue, forKey: Key.shakeAction)
+            onShakeActionChange?(shakeAction)
+        }
+    }
+
     // MARK: - Live-update hooks
 
     /// Called on every sensitivity mutation with the new value in g.
@@ -166,6 +218,12 @@ final class SettingsStore {
     /// (seconds × 800). AppDelegate wires this to
     /// `SensorService.setCooldownSamples(_:)`.
     var onCooldownChange: ((Int) -> Void)?
+
+    /// Called on every shakeAction mutation with the new mode.
+    /// AppDelegate uses this to pre-request notification authorization
+    /// when switching to `.notifyOnly` so the user sees the prompt
+    /// immediately instead of on first shake.
+    var onShakeActionChange: ((ShakeAction) -> Void)?
 
     // MARK: - Init
 
@@ -195,6 +253,9 @@ final class SettingsStore {
         // the latter case.
         self.warningSoundName = defaults.string(forKey: Key.warningSoundName) ?? Self.defaultWarningSoundName
         self.ejectedSoundName = defaults.string(forKey: Key.ejectedSoundName) ?? Self.defaultEjectedSoundName
+
+        let storedAction = defaults.string(forKey: Key.shakeAction) ?? Self.defaultShakeAction.rawValue
+        self.shakeAction = ShakeAction(rawValue: storedAction) ?? Self.defaultShakeAction
     }
 
     /// Reads the current cooldown value as a detector sample count.

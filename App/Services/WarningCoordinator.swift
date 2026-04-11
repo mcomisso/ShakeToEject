@@ -141,16 +141,35 @@ final class WarningCoordinator {
     private func complete() {
         let drivesToEject = drivesSnapshot // already filtered at trigger() time
         let expectedBSDNames = Set(drivesToEject.map(\.id))
-        NSLog("[warning] countdown complete — ejecting \(expectedBSDNames.count) drive(s)")
-        soundPlayer.playEjected()
-        driveMonitor.eject(drivesToEject)
         countdownTask = nil
 
-        // Enter the ejection-in-progress grace window so shakes during
-        // the actual unmount + eject work are suppressed.
-        if !expectedBSDNames.isEmpty {
-            isEjecting = true
-            startEjectionWatcher(expectedBSDNames: expectedBSDNames)
+        switch settings.shakeAction {
+        case .ejectWithWarning:
+            NSLog("[warning] countdown complete — ejecting \(expectedBSDNames.count) drive(s)")
+            soundPlayer.playEjected()
+            driveMonitor.eject(drivesToEject)
+
+            // Enter the ejection-in-progress grace window so shakes
+            // during the actual unmount + eject work are suppressed.
+            if !expectedBSDNames.isEmpty {
+                isEjecting = true
+                startEjectionWatcher(expectedBSDNames: expectedBSDNames)
+            }
+
+        case .warnOnly:
+            // User picked "warn only" — play no celebratory sound,
+            // don't touch the drives, don't enter the ejecting grace
+            // window. The dismissal animation still runs so the
+            // overlay goes away cleanly.
+            NSLog("[warning] countdown complete — warn-only mode, skipping eject")
+
+        case .notifyOnly:
+            // `.notifyOnly` routes around WarningCoordinator entirely
+            // in AppDelegate, so reaching complete() here means
+            // something rerouted a shake through trigger() anyway
+            // (for example, the dev menu's "force overlay" action).
+            // Treat it as warn-only: no eject, no sound.
+            NSLog("[warning] countdown complete — notify-only mode reached overlay path, skipping eject")
         }
 
         beginDismissal()

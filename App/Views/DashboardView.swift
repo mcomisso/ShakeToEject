@@ -51,6 +51,25 @@ struct DashboardView: View {
             }
 
             Section("Warning") {
+                VStack(alignment: .leading, spacing: 4) {
+                    Picker(
+                        "On shake",
+                        selection: Binding(
+                            get: { settings.shakeAction },
+                            set: { settings.shakeAction = $0 }
+                        )
+                    ) {
+                        ForEach(ShakeAction.allCases) { action in
+                            Text(action.label).tag(action)
+                        }
+                    }
+                    .pickerStyle(.menu)
+
+                    Text(settings.shakeAction.detail)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
                 Stepper(
                     "Countdown: \(settings.countdownSeconds)s",
                     value: Binding(
@@ -59,6 +78,7 @@ struct DashboardView: View {
                     ),
                     in: SettingsStore.countdownRange
                 )
+                .disabled(settings.shakeAction == .notifyOnly)
                 Text("How long the warning overlay waits before ejecting.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -75,6 +95,7 @@ struct DashboardView: View {
                     }
                 }
                 .pickerStyle(.menu)
+                .disabled(settings.shakeAction == .notifyOnly)
 
                 soundPickerRow(
                     label: "Warning sound",

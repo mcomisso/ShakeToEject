@@ -28,6 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let sensor = SensorService()
     let drives = DriveMonitor()
     let settings = SettingsStore()
+    let notifications = NotificationService()
     lazy var soundPlayer = SoundPlayer(settings: settings)
     lazy var warningCoordinator = WarningCoordinator(
         driveMonitor: drives,
@@ -46,9 +47,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.sensor.setCooldownSamples(samples)
         }
 
-        // Wire real shakes → warning flow
+        // When the user flips the shake-action picker to notifyOnly,
+        // prompt for notification permission right away so the dialog
+        // appears in context instead of on first shake.
+        settings.onShakeActionChange = { [weak self] action in
+            guard action == .notifyOnly else { return }
+            Task { @MainActor [weak self] in
+                _ = await self?.notifications.ensureAuthorization()
+            }
+        }
+
+        // Wire real shakes → response based on the current mode.
         sensor.onShake = { [weak self] _ in
-            self?.warningCoordinator.trigger()
+            self?.handleShake()
         }
 
         // Start the sensor with the current settings values
@@ -58,6 +69,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         drives.start()
         _ = warningCoordinator // force lazy init
+    }
+
+    /// Routes a detected shake to the appropriate response:
+    /// - `.ejectWithWarning` and `.warnOnly` → fullscreen warning
+    ///   (the coordinator itself decides whether to eject at the end).
+    /// - `.notifyOnly` → post a macOS notification, or fall back to
+    ///   the fullscreen warning flow if notifications aren't allowed.
+    private func handleShake() {
+        switch settings.shakeAction {
+        case .ejectWithWarning, .warnOnly:
+            warningCoordinator.trigger()
+
+        case .notifyOnly:
+            let eligibleCount = drives.drives
+                .filter { !settings.excludedVolumeNames.contains($0.volumeName) }
+                .count
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let posted = await self.notifications.postShakeNotification(driveCount: eligibleCount)
+                if !posted {
+                    NSLog("[app] notifyOnly mode failed to post — falling back to overlay")
+                    self.warningCoordinator.trigger()
+                }
+            }
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
