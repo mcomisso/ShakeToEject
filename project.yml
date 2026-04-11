@@ -13,12 +13,18 @@ settings:
   base:
     SWIFT_VERSION: "6.0"
     ENABLE_HARDENED_RUNTIME: YES
-    CODE_SIGN_STYLE: Automatic
-    CODE_SIGN_IDENTITY: "Apple Development"
     DEVELOPMENT_TEAM: 382G4857JD
     DEAD_CODE_STRIPPING: YES
     CLANG_ENABLE_MODULES: YES
     SWIFT_STRICT_CONCURRENCY: complete
+  configs:
+    Debug:
+      CODE_SIGN_STYLE: Automatic
+      CODE_SIGN_IDENTITY: "Apple Development"
+    Release:
+      CODE_SIGN_STYLE: Manual
+      CODE_SIGN_IDENTITY: "Developer ID Application"
+      PROVISIONING_PROFILE_SPECIFIER: ""
 
 targets:
   ShakeToEject:
