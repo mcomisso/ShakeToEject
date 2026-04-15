@@ -6,6 +6,7 @@ DerivedData/
 
 # XcodeGen generates this — treat as derived
 ShakeToEject.xcodeproj/
+App/Info.plist
 
 # Swift Package Manager
 .swiftpm/
@@ -22,3 +23,6 @@ Package.resolved
 
 # Local overrides
 project.local.yml
+
+# Release artifacts (publish via GitHub Releases, not git)
+releases/

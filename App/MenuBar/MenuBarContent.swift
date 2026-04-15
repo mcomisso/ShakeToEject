@@ -5,6 +5,7 @@ struct MenuBarContent: View {
     let drives: DriveMonitor
     let warningCoordinator: WarningCoordinator
     let settings: SettingsStore
+    let updater: UpdaterService
     let onOpenDashboard: () -> Void
 
     var body: some View {
@@ -54,6 +55,13 @@ struct MenuBarContent: View {
         Button("Simulate Shake (dev)") {
             warningCoordinator.trigger(force: true)
         }
+
+        Divider()
+
+        Button("Check for Updates…") {
+            updater.checkForUpdates()
+        }
+        .disabled(!updater.canCheckForUpdates)
 
         Divider()
 

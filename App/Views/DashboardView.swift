@@ -4,6 +4,7 @@ struct DashboardView: View {
     let settings: SettingsStore
     let drives: DriveMonitor
     let soundPlayer: SoundPlayer
+    let updater: UpdaterService
 
     var body: some View {
         Form {
@@ -181,13 +182,31 @@ struct DashboardView: View {
                         set: { settings.launchAtLogin = $0 }
                     )
                 )
+            }
+
+            Section("Updates") {
+                Toggle(
+                    "Automatically check for updates",
+                    isOn: Binding(
+                        get: { updater.automaticallyChecksForUpdates },
+                        set: { updater.automaticallyChecksForUpdates = $0 }
+                    )
+                )
 
                 HStack {
-                    Text("Version")
+                    Text("Current version")
                     Spacer()
-                    Text(Bundle.main.shortVersion)
+                    Text("\(Bundle.main.shortVersion) (\(Bundle.main.buildNumber))")
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
+                }
+
+                HStack {
+                    Spacer()
+                    Button("Check for Updates…") {
+                        updater.checkForUpdates()
+                    }
+                    .disabled(!updater.canCheckForUpdates)
                 }
             }
         }
@@ -227,5 +246,9 @@ struct DashboardView: View {
 private extension Bundle {
     var shortVersion: String {
         (infoDictionary?["CFBundleShortVersionString"] as? String) ?? "0.0.0"
+    }
+
+    var buildNumber: String {
+        (infoDictionary?["CFBundleVersion"] as? String) ?? "0"
     }
 }

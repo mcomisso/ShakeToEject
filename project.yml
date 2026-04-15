@@ -9,6 +9,11 @@ options:
   tabWidth: 4
   xcodeVersion: "26.0"
 
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.8.0"
+
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -37,14 +42,29 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mcsoftware.ShakeToEject
         PRODUCT_NAME: ShakeToEject
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_LSUIElement: YES
-        INFOPLIST_KEY_CFBundleDisplayName: ShakeToEject
-        INFOPLIST_KEY_NSHumanReadableCopyright: "© 2026 Matteo Comisso. MIT licensed."
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
         COMBINE_HIDPI_IMAGES: YES
         CODE_SIGN_ENTITLEMENTS: App/ShakeToEject.entitlements
+    info:
+      path: App/Info.plist
+      properties:
+        LSUIElement: YES
+        CFBundleDisplayName: ShakeToEject
+        NSHumanReadableCopyright: "© 2026 Matteo Comisso. MIT licensed."
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: $(PRODUCT_BUNDLE_PACKAGE_TYPE)
+        CFBundleInfoDictionaryVersion: "6.0"
+        SUFeedURL: "https://raw.githubusercontent.com/mcomisso/ShakeToEject/main/appcast.xml"
+        SUPublicEDKey: "uYfhP5vfYlV/5L0CLGcxiU1TI9wpMb/OdhVYtzb4sj8="
+        SUEnableAutomaticChecks: YES
+        SUScheduledCheckInterval: 86400
+    dependencies:
+      - package: Sparkle
 
   ShakeToEjectTests:
     type: bundle.unit-test

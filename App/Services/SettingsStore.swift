@@ -115,7 +115,7 @@ final class SettingsStore {
     static let silentSoundName = ""
 
     // MARK: - Ranges
-    static let countdownRange = 1...30
+    static let countdownRange = 0...30
     static let sensitivityRange = 0.05...1.0
     static let cooldownRange = 0.5...5.0
 
@@ -230,8 +230,13 @@ final class SettingsStore {
     init() {
         let defaults = UserDefaults.standard
 
-        let storedCountdown = defaults.integer(forKey: Key.countdownSeconds)
-        self.countdownSeconds = storedCountdown > 0 ? storedCountdown : Self.defaultCountdownSeconds
+        // Use object(forKey:) to distinguish "never set" from "set to 0".
+        // A stored 0 is a legitimate user choice ("no delay, eject immediately").
+        if defaults.object(forKey: Key.countdownSeconds) != nil {
+            self.countdownSeconds = defaults.integer(forKey: Key.countdownSeconds)
+        } else {
+            self.countdownSeconds = Self.defaultCountdownSeconds
+        }
 
         let storedSensitivity = defaults.double(forKey: Key.sensitivityThreshold)
         self.sensitivityThreshold = storedSensitivity > 0 ? storedSensitivity : Self.defaultSensitivityThreshold

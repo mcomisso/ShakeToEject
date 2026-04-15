@@ -115,6 +115,19 @@ final class WarningCoordinator {
         }
 
         let countdown = overrideCountdown ?? settings.countdownSeconds
+
+        // Zero-countdown fast path: skip the overlay entirely and run
+        // the completion logic immediately. Still routes through
+        // `complete()` so shakeAction (.ejectWithWarning / .warnOnly)
+        // is respected — .warnOnly with 0s is effectively a no-op.
+        if countdown <= 0 {
+            NSLog("[warning] trigger with 0s countdown — skipping overlay, completing immediately")
+            totalSeconds = 0
+            secondsRemaining = 0
+            complete()
+            return
+        }
+
         totalSeconds = countdown
         secondsRemaining = countdown
         isShowing = true
