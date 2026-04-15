@@ -52,7 +52,7 @@ final class NotificationService {
         guard await ensureAuthorization() else { return false }
 
         let content = UNMutableNotificationContent()
-        content.title = "ShakeToEject — motion detected"
+        content.title = "\(Bundle.main.displayName) — motion detected"
         content.body = Self.body(for: driveCount)
         content.sound = .default
         content.interruptionLevel = .timeSensitive

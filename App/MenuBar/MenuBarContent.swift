@@ -9,7 +9,7 @@ struct MenuBarContent: View {
     let onOpenDashboard: () -> Void
 
     var body: some View {
-        Text("ShakeToEject \(Bundle.main.shortVersion)")
+        Text("\(Bundle.main.displayName) \(Bundle.main.shortVersion)")
             .font(.headline)
 
         Text(sensor.isRunning ? "Sensor: running" : "Sensor: stopped")

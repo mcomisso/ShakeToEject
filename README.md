@@ -1,8 +1,10 @@
-# ShakeToEject
+# Grab to Eject
 
 **A macOS menu bar app that safely ejects external drives when it detects you picking up your laptop.**
 
-ShakeToEject watches the hidden accelerometer on Apple Silicon MacBook Pros and pops a playful warning countdown when it notices the laptop being moved. If you don't cancel within a few seconds, it unmounts and ejects every external drive so your data isn't at risk when you walk off with an open laptop still plugged into a portable SSD.
+> _Codebase name: `ShakeToEject`. The product was renamed to "Grab to Eject" in v1.0.2; the bundle identifier, scheme, and repo remain unchanged so updates continue to flow to existing installs._
+
+Grab to Eject watches the hidden accelerometer on Apple Silicon MacBook Pros and pops a playful warning countdown when it notices the laptop being moved. If you don't cancel within a few seconds, it unmounts and ejects every external drive so your data isn't at risk when you walk off with an open laptop still plugged into a portable SSD.
 
 ## How it works
 
@@ -66,7 +68,7 @@ Both take effect **live** — drag the slider and the running sensor picks up th
 
 ### Warning
 
-- **Countdown** (1 – 30 s) — how long the warning overlay waits before ejecting. Default 5 s.
+- **Countdown** (0 – 30 s) — how long the warning overlay waits before ejecting. Default 5 s. Set to 0 to skip the overlay entirely and eject immediately on shake.
 - **Style** — how the warning presents itself:
   - **Fullscreen** — dark overlay covering the whole screen, with giant countdown and panic line. Visible on every connected display.
   - **Notch (compact)** — a small rounded capsule that drops out of the MacBook hardware notch on notched MacBook Pros. Non-notched screens (external monitors) fall back to the fullscreen style.
@@ -80,24 +82,28 @@ Both take effect **live** — drag the slider and the running sensor picks up th
 ### General
 
 - **Launch at login** — registers the app as a login item via `SMAppService`.
-- **Version** — current build.
+
+### Updates
+
+- **Automatically check for updates** — toggles Sparkle's scheduled 24-hour update check.
+- **Check for Updates…** — manual check from either the menu bar or Settings. Updates are EdDSA-signed and notarized; Sparkle refuses to install unsigned or tampered payloads.
+- **Current version** — short version + build number.
 
 ## Known limitations
 
 - **Hardware support is narrow.** Only MacBook Pro M1 Pro and M2+ chips have the BMI286 IMU. M1 (non-Pro), M1 Air, M1 13" Pro, Intel Macs, and Mac mini / Mac Studio / iMac are all unsupported because the sensor isn't present.
 - **Volume-name-based exclusions.** The drive exclusion list matches by volume name, so renaming a drive breaks its exclusion. For a v1 this is an intentional simplification; a future version may move to volume UUIDs.
-- **No notarization yet.** Running the app outside Xcode on another Mac requires either disabling Gatekeeper or running a locally-built signed copy. Notarized distribution is not yet set up.
 - **The notch width is approximated.** AppKit does not expose the exact notch cutout width; the compact-mode capsule uses 200 pt which looks right across 14" and 16" MacBook Pros but may be imperfect on future models.
 - **Sample rate is hardcoded.** The cooldown-to-samples conversion assumes the ~800 Hz native rate measured on M1 Pro. Other chips may run at different rates; at present this only affects the cooldown slider feeling slightly off in real seconds.
 
 ## Credits
 
-ShakeToEject would not exist without these two projects that proved the IOKit HID path into the BMI286 is feasible:
+Grab to Eject would not exist without these two projects that proved the IOKit HID path into the BMI286 is feasible:
 
 - **[olvvier/apple-silicon-accelerometer](https://github.com/olvvier/apple-silicon-accelerometer)** — the Python reference that documented the `AppleSPUHIDDevice` matching criteria, the 22-byte report layout, and (crucially) the `SensorPropertyReportingState` / `SensorPropertyPowerState` / `ReportInterval` wake-up step. MIT licensed.
 - **[taigrr/spank](https://github.com/taigrr/spank)** — the Go implementation that inspired the "playful toy" angle and whose README first pointed me at the underlying sensor. MIT licensed.
 
-ShakeToEject re-implements the sensor read path in Swift from the technical details those projects published. No code was copied directly from either.
+Grab to Eject re-implements the sensor read path in Swift from the technical details those projects published. No code was copied directly from either.
 
 ## License
 

@@ -13,7 +13,7 @@ final class DashboardWindow: NSWindow {
             backing: .buffered,
             defer: false
         )
-        title = "ShakeToEject Settings"
+        title = "\(Bundle.main.displayName) Settings"
         isReleasedWhenClosed = false
         setFrameAutosaveName("ShakeToEject.Dashboard")
         contentView = NSHostingView(rootView: rootView)

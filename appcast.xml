@@ -6,13 +6,25 @@
         <description>Updates for ShakeToEject</description>
         <language>en</language>
         <item>
+            <title>1.0.2</title>
+            <pubDate>Thu, 16 Apr 2026 00:28:23 +0100</pubDate>
+            <sparkle:version>2</sparkle:version>
+            <sparkle:shortVersionString>1.0.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <enclosure url="https://github.com/mcomisso/ShakeToEject/releases/download/v1.0.2/ShakeToEject-1.0.2.zip" length="4797672" type="application/octet-stream" sparkle:edSignature="fhv4SE+QkXFsp9chGp+vlP684iZS/PUcOphzB+H10jaZoq1u3r7/l8gBeCgnNkNHi8/rwaLhnwcD1gkVZ9iLAw=="/>
+            <sparkle:deltas>
+                <enclosure url="https://github.com/mcomisso/ShakeToEject/releases/download/v1.0.2/ShakeToEject2-1.delta" sparkle:deltaFrom="1" length="2325242" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="977808" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,uk" sparkle:edSignature="3Z6gYEscAEkzx5bE/qFTcAjUYhrNcq9V2G2T/zIi20xTqGFuwP1yyiIbIxeMoMmIJEoZRZH7AUvg1sAU86LcAg=="/>
+            </sparkle:deltas>
+        </item>
+        <item>
             <title>1.0.1</title>
             <pubDate>Thu, 16 Apr 2026 00:05:27 +0100</pubDate>
             <sparkle:version>1</sparkle:version>
             <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <enclosure url="https://github.com/mcomisso/ShakeToEject/releases/download/v1.0.1/ShakeToEject-1.0.1.zip" length="1507614" type="application/octet-stream" sparkle:edSignature="dk281VcVy0nQO2uPLUxYu9YmX7fsXy323piWORYUGc/vw3eNd2p0HoABq13y/9p66loCoUzPjRK4FIk+nWlJAg=="/>
+            <enclosure url="https://github.com/mcomisso/ShakeToEject/releases/download/v1.0.2/ShakeToEject-1.0.1.zip" length="1507614" type="application/octet-stream" sparkle:edSignature="dk281VcVy0nQO2uPLUxYu9YmX7fsXy323piWORYUGc/vw3eNd2p0HoABq13y/9p66loCoUzPjRK4FIk+nWlJAg=="/>
         </item>
     </channel>
 </rss>
