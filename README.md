@@ -22,6 +22,24 @@ The whole thing runs as an unprivileged code-signed process — no launch daemon
 - **Xcode:** 26 or later, if you want to build from source.
 - **Code signing:** required (even ad-hoc). The driver wake step that unlocks the accelerometer only works for code-signed processes on macOS 26.
 
+## Install with Homebrew
+
+The quickest way to install Grab to Eject is via the dedicated Homebrew tap:
+
+```bash
+brew install --cask mcomisso/grabtoeject/grab-to-eject
+```
+
+That shorthand taps `mcomisso/homebrew-grabtoeject` and installs the signed, notarized `.app` into `/Applications`. Updates are handled in-app by Sparkle — no need to `brew upgrade`.
+
+To uninstall, optionally wiping preferences and caches:
+
+```bash
+brew uninstall --cask --zap grab-to-eject
+```
+
+Tap source: [github.com/mcomisso/homebrew-grabtoeject](https://github.com/mcomisso/homebrew-grabtoeject).
+
 ## Build from source
 
 ```bash
